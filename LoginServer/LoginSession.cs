@@ -1,6 +1,6 @@
 ﻿using Cryptography;
-using Database.Context;
-using Database.Tables;
+using Database.LoginDatabase;
+using Database.LoginDatabase.Tables;
 using LoginServer.Enums;
 using Microsoft.EntityFrameworkCore;
 using Networking;
@@ -15,7 +15,7 @@ namespace LoginServer
     {
         private LoginState _loginState = LoginState.None;
         private SRP6? _srp6 = null;
-        private GameAccount? _gameAccount = null;
+        private GameAccounts? _gameAccount = null;
         private readonly static byte[] _versionChallenge = [0xBA, 0xA3, 0x1E, 0x99, 0xA0, 0x0B, 0x21, 0x57, 0xFC, 0x37, 0x3F, 0xB3, 0x69, 0xCD, 0xD2, 0xF1];
 
         public override void HandlePacket(int opcode, byte[] payload)
@@ -108,6 +108,11 @@ namespace LoginServer
                 // No game account with the provided login name exists
                 if (_gameAccount == null)
                 {
+                    /*
+                    SendLoginFailed(LoginOpcode.AuthLogonChallenge, LoginResult.WowFailUnknownAccount);
+                    return;
+                    */
+
                     // For now we create a new account for that login to allow testing. This should be removed once we have a registration service.
                     (byte[] salt, byte[] verifier) = SRP6.GenerateRegistrationData(logonChallenge.Login, "test");
 

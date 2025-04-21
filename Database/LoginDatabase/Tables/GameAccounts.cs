@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Database.Tables
+﻿namespace Database.LoginDatabase.Tables
 {
-    public sealed class GameAccount
+    public sealed class GameAccounts
     {
         public int Id { get; set; }
         public string Login { get; set; } = string.Empty;
