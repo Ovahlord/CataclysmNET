@@ -20,7 +20,7 @@ namespace LoginServer
             // Login packets are not split over multiple stream messages and instead arrive as one full packet.
             LoginOpcode opcode = (LoginOpcode)data[0];
             ReadOnlySpan<byte> span = new(data, 1, dataLength - 1);
-            Session.HandlePacket((int)opcode, span.ToArray());
+            Session?.HandlePacket((int)opcode, span.ToArray());
         }
     }
 }

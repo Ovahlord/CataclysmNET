@@ -1,5 +1,8 @@
-﻿namespace Database.RealmDatabase.Tables
+﻿using Microsoft.EntityFrameworkCore;
+
+namespace Database.RealmDatabase.Tables
 {
+    [PrimaryKey(nameof(RealmId), nameof(CharacterId))]
     public sealed class RealmCharacters
     {
         public int RealmId { get; set; }

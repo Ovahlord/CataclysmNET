@@ -5,29 +5,22 @@ namespace Networking
     /// <summary>
     /// The base socket class handles the lower level networking operations. It creates a session that handles the high level operations, such as packet handling
     /// </summary>
-    public abstract class BaseSocket
+    public abstract class BaseSocket(TcpClient client)
     {
-        public BaseSocket(TcpClient client)
-        {
-            _client = client;
-            Session = CreateSession();
-        }
-
         private readonly CancellationTokenSource _cancellationTokenSource = new();
-        private readonly TcpClient _client;
-        public BaseSession Session { get; private set; }
+        public BaseSession? Session { get; private set; }
 
         public void Start()
         {
-            Console.WriteLine($"[{GetType().Name}] Started socket for client {_client.Client.RemoteEndPoint}");
+            Console.WriteLine($"[{GetType().Name}] Started socket for client {client.Client.RemoteEndPoint}");
             Task.Run(ReadDataFromStream, _cancellationTokenSource.Token);
         }
 
         public void Close()
         {
-            Console.WriteLine($"[{GetType().Name}] Closed socket for client {_client.Client.RemoteEndPoint}");
+            Console.WriteLine($"[{GetType().Name}] Closed socket for client {client.Client.RemoteEndPoint}");
             _cancellationTokenSource.Cancel();
-            _client.Close();
+            client.Close();
         }
 
         public async Task ReadDataFromStream()
@@ -38,7 +31,7 @@ namespace Networking
 
                 while (!_cancellationTokenSource.IsCancellationRequested)
                 {
-                    int bytesReceived = await _client.GetStream().ReadAsync(readBuffer, _cancellationTokenSource.Token);
+                    int bytesReceived = await client.GetStream().ReadAsync(readBuffer, _cancellationTokenSource.Token);
                     // Receiving 0 bytes means that the client has been closed or lost its connection
                     if (bytesReceived == 0)
                     {
@@ -47,6 +40,11 @@ namespace Networking
                     }
 
                     Console.WriteLine($"[{GetType().Name}] Received {bytesReceived} bytes from tcp stream");
+
+                    // Create a session when we receive our first data
+                    if (Session == null)
+                        Session = CreateSession();
+
                     DataReceived(readBuffer, bytesReceived);
                 }
 
@@ -64,7 +62,7 @@ namespace Networking
         {
             try
             {
-                await _client.GetStream().WriteAsync(data, _cancellationTokenSource.Token);
+                await client.GetStream().WriteAsync(data, _cancellationTokenSource.Token);
             }
             catch (Exception ex)
             {

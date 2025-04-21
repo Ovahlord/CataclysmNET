@@ -1,4 +1,5 @@
 ﻿using Database.LoginDatabase;
+using Database.RealmDatabase;
 using Networking;
 using System.Net;
 using System.Net.Sockets;
@@ -16,9 +17,14 @@ namespace LoginServer
             using LoginDatabaseContext loginDatabase = new();
             loginDatabase.Database.EnsureCreated();
 
+            using RealmDatabaseContext realmDatabase = new();
+            realmDatabase.Database.EnsureCreated();
+
             IPEndPoint endpoint = IPEndPoint.Parse("127.0.0.1:3724");
             TcpListener listener = new(endpoint);
             listener.Start();
+
+            RealmsStatusManager.Initialize();
 
             while (true)
             {

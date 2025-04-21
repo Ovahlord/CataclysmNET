@@ -1,12 +1,14 @@
 ﻿using Cryptography;
 using Database.LoginDatabase;
 using Database.LoginDatabase.Tables;
+using Database.RealmDatabase.Tables;
 using LoginServer.Enums;
 using Microsoft.EntityFrameworkCore;
 using Networking;
 using Packets;
 using Packets.LoginPackets;
 using Packets.Opcodes;
+using Shared.Enums;
 using System.Text;
 
 namespace LoginServer
@@ -150,7 +152,6 @@ namespace LoginServer
 
             _loginState = LoginState.Proof;
 
-
             Task.Run(async () =>
             {
                 if (_srp6 == null || _gameAccount == null)
@@ -194,9 +195,18 @@ namespace LoginServer
         public void HandleRealmList(ClientRealmList realmList)
         {
             // realmList comes with 32 bits of unk data. We ignore it for now
-            ServerRealmList packet = new()
+            ServerRealmList packet = new();
+            foreach (Realms realm in RealmsStatusManager.RealmCache)
             {
-            };
+                packet.RealmList.Add(new()
+                {
+                    Id = (byte)realm.Id,
+                    Name = realm.Name,
+                    Flags = (RealmFlags)realm.Flags,
+                    RealmType = realm.RealmType,
+                    TimeZone = realm.TimeZone
+                });
+            }
 
             SendPacket(packet);
         }

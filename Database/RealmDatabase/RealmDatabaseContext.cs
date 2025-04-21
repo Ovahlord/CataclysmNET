@@ -7,9 +7,9 @@ namespace Database.RealmDatabase
     {
         private readonly string _connectionString = "Server=localhost; User ID=root; Password=trinity; Database=realm";
 
-        DbSet<Realms> Realms { get; set; }
-        DbSet<Characters> Characters { get; set; }
-        DbSet<RealmCharacters> RealmCharacters { get; set; }
+        public DbSet<Realms> Realms { get; set; }
+        public DbSet<Characters> Characters { get; set; }
+        public DbSet<RealmCharacters> RealmCharacters { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
