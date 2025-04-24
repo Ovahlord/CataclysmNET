@@ -52,7 +52,7 @@ namespace LoginServer
             Task.WaitAll(connectTasks);
             */
             RealmCache = realms;
-            Console.WriteLine($"Updated status of {RealmCache.Count} realms");
+            //Console.WriteLine($"Updated status of {RealmCache.Count} realms");
         }
     }
 }

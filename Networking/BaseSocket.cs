@@ -1,4 +1,5 @@
-﻿using System.Net.Sockets;
+﻿using Packets;
+using System.Net.Sockets;
 
 namespace Networking
 {
@@ -68,6 +69,11 @@ namespace Networking
             {
                 Console.WriteLine(ex);
             }
+        }
+
+        public virtual async Task SendPacketAsync(ServerPacket packet)
+        {
+            await WriteDataToStreamAsync(packet.Write().GetRawPacket());
         }
 
         public abstract BaseSession CreateSession();

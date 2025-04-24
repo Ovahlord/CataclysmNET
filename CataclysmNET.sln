@@ -18,6 +18,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Database", "Database\Databa
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared", "Shared\Shared.csproj", "{11AC7A0D-BD12-44CE-939E-034DF4666707}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RealmServer", "RealmServer\RealmServer.csproj", "{6FABF3AC-A187-4F70-90C7-78447DD9FB92}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -48,6 +50,10 @@ Global
 		{11AC7A0D-BD12-44CE-939E-034DF4666707}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{11AC7A0D-BD12-44CE-939E-034DF4666707}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{11AC7A0D-BD12-44CE-939E-034DF4666707}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6FABF3AC-A187-4F70-90C7-78447DD9FB92}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6FABF3AC-A187-4F70-90C7-78447DD9FB92}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6FABF3AC-A187-4F70-90C7-78447DD9FB92}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6FABF3AC-A187-4F70-90C7-78447DD9FB92}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

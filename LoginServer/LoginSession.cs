@@ -29,7 +29,7 @@ namespace LoginServer
         {
             try
             {
-                Task.Run(async () => { await Socket.WriteDataToStreamAsync(packet.Write().GetRawPacket()); }, _cancellationTokenSource.Token);
+                Task.Run(async () => await Socket.SendPacketAsync(packet), _cancellationTokenSource.Token);
             }
             catch (OperationCanceledException) { }
             catch (Exception) { throw; }
