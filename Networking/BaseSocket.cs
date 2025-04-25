@@ -8,7 +8,7 @@ namespace Networking
     /// </summary>
     public abstract class BaseSocket(TcpClient client)
     {
-        private readonly CancellationTokenSource _cancellationTokenSource = new();
+        protected readonly CancellationTokenSource _cancellationTokenSource = new();
         public BaseSession? Session { get; private set; }
 
         public void Start()

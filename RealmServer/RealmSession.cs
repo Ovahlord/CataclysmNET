@@ -1,25 +1,24 @@
 ﻿using Networking;
-using Packets;
-using System;
+using Packets.GamePackets;
+using Packets.Opcodes;
+using Shared.Enums;
 
 namespace RealmServer
 {
-    public sealed class RealmSession(BaseSocket socket) : BaseSession(socket)
+    public sealed class RealmSession(BaseSocket socket) : GameSession(socket)
     {
-        public override void HandlePacket(int opcode, byte[] payload)
+        protected override void CallPacketHandler(ClientOpcode opcode, byte[] payload)
         {
-            throw new NotImplementedException();
+            switch (opcode)
+            {
+                default:
+                    base.CallPacketHandler(opcode, payload);
+                    break;
+            }
         }
 
-        public override void SendPacket(ServerPacket packet)
-        {
-            try
-            {
-                ReadOnlyMemory<byte> packetBuffer = packet.Write().GetRawPacket();
-                ReadOnlyMemory<byte> headerBuffer = ServerPacket.BuildHeader(packetBuffer.Length, packet.Cmd);
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception) { throw; }
-        }
+        #region Packet Handlers
+
+        #endregion
     }
 }

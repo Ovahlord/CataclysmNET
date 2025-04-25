@@ -23,8 +23,10 @@ namespace RealmServer
 
         private static void StartSocket(TcpClient client)
         {
+            Console.WriteLine("created socket");
             RealmSocket socket = new(client);
             socket.Start();
+            socket.SendConnectionInitialize();
         }
     }
 }

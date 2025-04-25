@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Packets.LoginPackets
+﻿namespace Packets.LoginPackets
 {
     public sealed class ClientAuthLogonChallenge(byte[] buffer) : ClientPacket(buffer)
     {

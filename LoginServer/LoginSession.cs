@@ -29,7 +29,7 @@ namespace LoginServer
         {
             try
             {
-                Task.Run(async () => await Socket.SendPacketAsync(packet), _cancellationTokenSource.Token);
+                Task.Run(() => Socket.SendPacketAsync(packet), _cancellationTokenSource.Token);
             }
             catch (OperationCanceledException) { }
             catch (Exception) { throw; }
@@ -204,7 +204,8 @@ namespace LoginServer
                     Name = realm.Name,
                     Flags = (RealmFlags)realm.Flags,
                     RealmType = realm.RealmType,
-                    TimeZone = realm.TimeZone
+                    TimeZone = realm.TimeZone,
+                    RealmServerAddress = realm.Address
                 });
             }
 

@@ -7,10 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="GamePackets\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Cryptography\Cryptography.csproj" />
     <ProjectReference Include="..\Shared\Shared.csproj" />
   </ItemGroup>
