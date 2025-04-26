@@ -120,6 +120,14 @@ namespace Core.Networking
             SendPacket(packet);
         }
 
+        public void SendSuspendComms()
+        {
+        }
+
+        public void SendResumeComms()
+        {
+        }
+
         private void SendAuthResponseError(ResponseCodes error)
         {
             ServerAuthResponse packet = new((byte)error);

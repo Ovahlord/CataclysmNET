@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RealmServer", "RealmServer\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core", "Core\Core.csproj", "{A10A41FE-CA52-4790-95D5-48B30DF2F58D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorldServer", "WorldServer\WorldServer.csproj", "{FD624891-232C-4D4E-957A-EE9AE73CF2B1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{A10A41FE-CA52-4790-95D5-48B30DF2F58D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A10A41FE-CA52-4790-95D5-48B30DF2F58D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A10A41FE-CA52-4790-95D5-48B30DF2F58D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FD624891-232C-4D4E-957A-EE9AE73CF2B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FD624891-232C-4D4E-957A-EE9AE73CF2B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FD624891-232C-4D4E-957A-EE9AE73CF2B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FD624891-232C-4D4E-957A-EE9AE73CF2B1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
