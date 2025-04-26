@@ -66,11 +66,10 @@ namespace Core.Networking
                     payload = new byte[payloadSize];
                 }
 
-                Console.WriteLine($"[{GetType().Name}] extracted payload size ({payload.Length}) and opcode ({_cmd}) from header");
-
                 // If the method ReadHeader returned a -1 as cmd, it implies that the header is either malformed, invalid or broken. Cancel right here.
                 if (_cmd == -1)
                 {
+                    Console.WriteLine($"[{GetType().Name}] Received broken header. Possible broken encryption?");
                     Close();
                     return;
                 }
@@ -102,7 +101,6 @@ namespace Core.Networking
                     payload = null;
                     continue;
                 }
-
 
                 Session?.HandlePacket(_cmd, payload);
                 header = null;

@@ -143,8 +143,8 @@ namespace Core.Packets.GamePackets
             hmac.BlockUpdate(BitConverter.GetBytes(addressType), 0, 4);
             hmac.BlockUpdate(BitConverter.GetBytes(Payload.Where.Port), 0, 2);
             hmac.BlockUpdate(_haiku, 0, 73);
-            hmac.BlockUpdate(_piDigits, 0, _piDigits.Length);
-            hmac.BlockUpdate([Payload.XorMagic], 0, 1);
+            hmac.BlockUpdate(_piDigits, 0, 142);
+            hmac.Update(Payload.XorMagic);
 
             byte[] hmacResult = new byte[hmac.GetMacSize()];
             hmac.DoFinal(hmacResult, 0);
@@ -411,7 +411,7 @@ namespace Core.Packets.GamePackets
             // Perform the operations
             BigInteger m1 = BigInteger.ModPow(bnData % _p, _dmp1, _p);
             BigInteger m2 = BigInteger.ModPow(bnData % _q, _dmq1, _q);
-            BigInteger h = _iqmp * (m1 - m2) % _p;
+            BigInteger h = (_iqmp * (m1 - m2)) % _p;
 
             // Ensure h is positive
             if (h < 0)

@@ -8,6 +8,7 @@ namespace Core.Packets.GamePackets
 
         public ServerSuspendComms(uint serial) : base(4, (int)ServerOpcode.SMSG_SUSPEND_COMMS)
         {
+            Serial = serial;
         }
 
         public override ServerPacket Write()

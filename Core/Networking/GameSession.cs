@@ -25,12 +25,12 @@ namespace Core.Networking
     {
         private readonly BigInteger _encryptSeed = new(RandomNumberGenerator.GetBytes(16), true);
         private readonly BigInteger _decryptSeed = new(RandomNumberGenerator.GetBytes(16), true);
-        private readonly uint _authSeed = BinaryPrimitives.ReadUInt32LittleEndian(RandomNumberGenerator.GetBytes(4));
+        private readonly byte[] _authSeed = RandomNumberGenerator.GetBytes(4);
         private GameAccounts? _gameAccount = null;
 
         public override void HandlePacket(int opcode, byte[] payload)
         {
-            Console.WriteLine($"[{GetType().Name}] Called packet handler for opcode: {(ClientOpcode)opcode}\n");
+            Console.WriteLine($"[{GetType().Name}] Called packet handler for opcode: {(ClientOpcode)opcode} (Size: {payload.Length})");
             CallPacketHandler((ClientOpcode)opcode, payload);
         }
 
@@ -96,7 +96,7 @@ namespace Core.Networking
                 sha.BlockUpdate(accountBytes, 0, accountBytes.Length);
                 sha.BlockUpdate(BitConverter.GetBytes(t), 0, 4);
                 sha.BlockUpdate(BitConverter.GetBytes(authSession.LocalChallenge), 0, 4);
-                sha.BlockUpdate(BitConverter.GetBytes(_authSeed), 0, 4);
+                sha.BlockUpdate(_authSeed, 0, _authSeed.Length);
                 sha.BlockUpdate(_gameAccount.SessionKey, 0, _gameAccount.SessionKey.Length);
 
                 byte[] hash = new byte[sha.GetDigestSize()];
@@ -124,7 +124,10 @@ namespace Core.Networking
 
         private void HandleAuthContinuedSession(ClientAuthContinuedSession clientAuthContinuedSession)
         {
-            ConnectToKey connectToKey = new(clientAuthContinuedSession.Key);
+            ConnectToKey connectToKey = new()
+            {
+                Raw = clientAuthContinuedSession.Key
+            };
 
             Task.Run(async () =>
             {
@@ -137,17 +140,15 @@ namespace Core.Networking
                     return;
                 }
 
-                GameSessionManager.SetActiveSession(_gameAccount.Id, this);
-
                 if (Socket is GameSocket socket)
                     socket.InitializePacketCrypt(_gameAccount.SessionKey);
 
-                byte[] accountBytes = Encoding.UTF8.GetBytes(_gameAccount.Login.ToUpper());
+                byte[] login = Encoding.UTF8.GetBytes(_gameAccount.Login.ToUpper());
 
                 Sha1Digest sha = new();
-                sha.BlockUpdate(accountBytes, 0, accountBytes.Length);
+                sha.BlockUpdate(login, 0, login.Length);
                 sha.BlockUpdate(_gameAccount.SessionKey, 0, _gameAccount.SessionKey.Length);
-                sha.BlockUpdate(BitConverter.GetBytes(_authSeed), 0, 4);
+                sha.BlockUpdate(_authSeed, 0, _authSeed.Length);
 
                 byte[] hash = new byte[sha.GetDigestSize()];
                 sha.DoFinal(hash, 0);
@@ -163,14 +164,17 @@ namespace Core.Networking
 
                 Console.WriteLine($"[{GetType().Name}] HandleAuthContinuedSession successfully authenticated");
 
-                // All checks have passed. Send the response and await new packets
-                SendAuthResponseSuccess();
+                GameSessionManager.InitiateSessionJump(_gameAccount.Id, this);
             });
         }
 
         private void HandleClientSuspendCommsAck(ClientSuspendCommsAck clientSuspendCommsAck)
         {
+            if (_gameAccount == null)
+                return;
 
+            Console.WriteLine($"ClientSuspendCommsAck Serial: {clientSuspendCommsAck.Serial}");
+            GameSessionManager.FinalizeSessionJump(_gameAccount.Id);
         }
 
         #endregion
@@ -181,7 +185,7 @@ namespace Core.Networking
         {
             ServerAuthChallenge packet = new()
             {
-                Challenge = _authSeed,
+                Challenge = BinaryPrimitives.ReadUInt32LittleEndian(_authSeed),
                 DosZeroBits = 1
             };
 
@@ -196,14 +200,12 @@ namespace Core.Networking
 
         public void SendSuspendComms()
         {
-            Console.WriteLine($"[{GetType().Name}] Sending SMSG_SUSPEND_COMMS");
-            ServerSuspendComms packet = new(0);
+            ServerSuspendComms packet = new(20);
             SendPacket(packet);
         }
 
         public void SendResumeComms()
         {
-            Console.WriteLine($"[{GetType().Name}] Sending SMSG_RESUME_COMMS");
             ServerResumeComms packet = new();
             SendPacket(packet);
         }
@@ -234,7 +236,7 @@ namespace Core.Networking
 
             ServerConnectTo packet = new()
             {
-                Serial = 0,
+                Serial = 17,
                 Payload = new()
                 {
                     Where = IPEndPoint.Parse("127.0.0.1:8085")

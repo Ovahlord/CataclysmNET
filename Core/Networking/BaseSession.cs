@@ -1,5 +1,5 @@
 ﻿using Core.Packets;
-using Database.LoginDatabase.Tables;
+using Core.Packets.Opcodes;
 
 namespace Core.Networking
 {
@@ -17,6 +17,9 @@ namespace Core.Networking
 
         public void SendPacket(ServerPacket packet)
         {
+            if (this is GameSession session)
+                Console.WriteLine($"[{GetType().Name}] Sending packet with opcode {(ServerOpcode)packet.Cmd}");
+
             Task.Run(() => SendPacketAsync(packet), _cancellationTokenSource.Token);
         }
 

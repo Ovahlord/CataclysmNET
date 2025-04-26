@@ -9,10 +9,15 @@ namespace Core.Networking
 
         public static void SetActiveSession(long gameAccountId, GameSession? activeSession)
         {
-            if (activeSession != null && _activeSessions.TryGetValue(gameAccountId, out GameSession? currentSession))
-                _activeSessions.TryUpdate(gameAccountId, activeSession, currentSession);
-            else if (activeSession == null)
+            if (activeSession == null)
+            {
                 _activeSessions.TryRemove(gameAccountId, out _);
+            }
+            else
+            {
+                _activeSessions.TryRemove(gameAccountId, out _);
+                _activeSessions.TryAdd(gameAccountId, activeSession);
+            }
         }
 
         /*
@@ -37,9 +42,7 @@ namespace Core.Networking
 
         public static void FinalizeSessionJump(long gameAccountId)
         {
-            // There is no active session
             _activeSessions.TryGetValue(gameAccountId, out GameSession? currentSession);
-
             if (!_pendingSessions.TryGetValue(gameAccountId, out GameSession? pendingSession))
                 return;
 
@@ -50,15 +53,11 @@ namespace Core.Networking
                 return;
             }
 
-            if (_activeSessions.TryUpdate(gameAccountId, pendingSession, currentSession))
-            {
-                // Make sure the supsended session is actually closed to prevent exploits.
-                currentSession.Close();
+            _activeSessions.TryRemove(gameAccountId, out _);
+            _activeSessions.TryAdd(gameAccountId, pendingSession);
+            _pendingSessions.TryRemove(gameAccountId, out _);
 
-                // Send SMSG_RESUME_COMMS to tell the socket to start sending and receiving
-                pendingSession.SendResumeComms();
-                _pendingSessions.TryRemove(gameAccountId, out _);
-            }
+            pendingSession.SendResumeComms();
         }
     }
 }

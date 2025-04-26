@@ -1,4 +1,5 @@
 ﻿using Core.Networking;
+using Core.Packets.GamePackets;
 using Core.Packets.Opcodes;
 
 namespace RealmServer
@@ -9,6 +10,7 @@ namespace RealmServer
         {
             switch (opcode)
             {
+                case ClientOpcode.CMSG_ENUM_CHARACTERS: HandleEnumCharacters(payload); break;
                 default:
                     base.CallPacketHandler(opcode, payload);
                     break;
@@ -16,6 +18,15 @@ namespace RealmServer
         }
 
         #region Packet Handlers
+
+        private void HandleEnumCharacters(ClientEnumCharacters enumCharacters)
+        {
+            ServerEnumCharactersResult packet = new()
+            {
+                Success = true
+            };
+            SendPacket(packet);
+        }
 
         #endregion
     }
