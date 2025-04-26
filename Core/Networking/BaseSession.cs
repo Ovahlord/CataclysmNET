@@ -1,4 +1,5 @@
-﻿using Packets;
+﻿using Database.LoginDatabase.Tables;
+using Packets;
 
 namespace Core.Networking
 {
@@ -21,6 +22,9 @@ namespace Core.Networking
 
         public void Close()
         {
+            if (_cancellationTokenSource.IsCancellationRequested)
+                return;
+
             Socket.Close();
             _cancellationTokenSource.Cancel();
         }

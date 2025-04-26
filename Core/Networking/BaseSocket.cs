@@ -25,9 +25,13 @@ namespace Core.Networking
         /// </summary>
         public void Close()
         {
+            if (_cancellationTokenSource.IsCancellationRequested)
+                return;
+
             Console.WriteLine($"[{GetType().Name}] Closed socket for client {client.Client.RemoteEndPoint}");
             _cancellationTokenSource.Cancel();
             client.Close();
+            Session?.Close();
         }
 
         /// <summary>
