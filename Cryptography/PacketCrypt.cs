@@ -1,9 +1,8 @@
 ﻿using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Macs;
 using Org.BouncyCastle.Crypto.Parameters;
-using Cryptography;
 
-namespace Packets
+namespace Cryptography
 {
     public class PacketCrypt
     {
