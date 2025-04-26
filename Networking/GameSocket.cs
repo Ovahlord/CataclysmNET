@@ -5,6 +5,7 @@ using System.Buffers;
 using Packets.GamePackets;
 using System.Buffers.Binary;
 using System.Reflection.Emit;
+using Cryptography;
 
 namespace Networking
 {
@@ -90,8 +91,6 @@ namespace Networking
                     }
 
                     Console.WriteLine($"[{GetType().Name}] connection successfully initialized");
-
-                    _connectionInitialized = true;
                     header = null;
                     payload = null;
 
@@ -134,6 +133,12 @@ namespace Networking
         {
             if (connectionInitialize.ConnectionInitialize != _clientConnectionInitialize)
                 return false;
+
+            _connectionInitialized = true;
+
+            // Connection has been established. Time to challenge the client to proof its identity
+            if (Session is GameSession session)
+                session.SendAuthChallenge();
 
             return true;
         }

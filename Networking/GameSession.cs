@@ -2,6 +2,9 @@
 using Packets.GamePackets;
 using Packets.Opcodes;
 using Shared.Enums;
+using System.Security.Cryptography;
+using System.Numerics;
+using System.Buffers.Binary;
 
 namespace Networking
 {
@@ -11,6 +14,10 @@ namespace Networking
     /// </summary>
     public abstract class GameSession(BaseSocket socket) : BaseSession(socket)
     {
+        private readonly BigInteger _encryptSeed = new(RandomNumberGenerator.GetBytes(16), true);
+        private readonly BigInteger _decryptSeed = new(RandomNumberGenerator.GetBytes(16), true);
+        private readonly uint _authSeed = BinaryPrimitives.ReadUInt32LittleEndian(RandomNumberGenerator.GetBytes(4));
+
         public override void HandlePacket(int opcode, byte[] payload)
         {
             Console.WriteLine($"[{GetType().Name}] Called packet handler for opcode: {(ClientOpcode)opcode}\n");
@@ -42,9 +49,30 @@ namespace Networking
 
         #region Packet Handlers
 
-        public void HandleLogDisconnect(ClientLogDisconnect logDisconnect)
+        private void HandleLogDisconnect(ClientLogDisconnect logDisconnect)
         {
             Console.WriteLine($"[{GetType().Name}] Client disconnected for reason: {(LogDisconnectReason)logDisconnect.Reason}");
+        }
+
+        #endregion
+
+        #region Packet sending methods
+
+        public void SendAuthChallenge()
+        {
+            ServerAuthChallenge packet = new()
+            {
+                Challenge = _authSeed,
+                DosZeroBits = 1
+            };
+
+            for (int i = 0; i < 4; ++i)
+            {
+                packet.DosChallenge[i] = BitConverter.ToUInt32(_encryptSeed.ToByteArray(true), i * 4);
+                packet.DosChallenge[i + 4] = BitConverter.ToUInt32(_decryptSeed.ToByteArray(true), i * 4);
+            }
+
+            SendPacket(packet);
         }
 
         #endregion

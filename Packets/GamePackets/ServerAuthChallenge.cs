@@ -4,7 +4,7 @@ namespace Packets.GamePackets
 {
     public class ServerAuthChallenge : ServerPacket
     {
-        public uint[] DosChallenge { get; set; } = [];
+        public uint[] DosChallenge { get; set; } = new uint[8];
         public uint Challenge { get; set; }
         public byte DosZeroBits { get; set; }
 
