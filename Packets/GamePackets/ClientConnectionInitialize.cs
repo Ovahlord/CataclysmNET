@@ -1,6 +1,6 @@
 ﻿namespace Packets.GamePackets
 {
-    public sealed class ClientConnectionInitialize : ClientPacket
+    public sealed class ClientConnectionInitialize(byte[] buffer) : ClientPacket(buffer)
     {
         public static implicit operator ClientConnectionInitialize(byte[] buffer)
         {
@@ -8,10 +8,6 @@
         }
 
         public string ConnectionInitialize { get; private set; } = string.Empty;
-
-        public ClientConnectionInitialize(byte[] buffer) : base(buffer)
-        {
-        }
 
         protected override void Read()
         {

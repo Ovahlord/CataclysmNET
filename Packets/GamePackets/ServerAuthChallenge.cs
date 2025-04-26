@@ -1,0 +1,25 @@
+﻿using Packets.Opcodes;
+
+namespace Packets.GamePackets
+{
+    public class ServerAuthChallenge : ServerPacket
+    {
+        public uint[] DosChallenge { get; set; } = [];
+        public uint Challenge { get; set; }
+        public byte DosZeroBits { get; set; }
+
+        public ServerAuthChallenge() : base(32 + 4 + 1, (int)ServerOpcode.SMSG_AUTH_CHALLENGE) { }
+        public override ServerPacket Write()
+        {
+            foreach (uint challenge in DosChallenge)
+            {
+                WriteUInt32(challenge);
+            }
+
+            WriteUInt32(Challenge);
+            WriteByte(DosZeroBits);
+
+            return this;
+        }
+    }
+}

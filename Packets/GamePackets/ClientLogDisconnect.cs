@@ -1,6 +1,6 @@
 ﻿namespace Packets.GamePackets
 {
-    public sealed class ClientLogDisconnect : ClientPacket
+    public sealed class ClientLogDisconnect(byte[] buffer) : ClientPacket(buffer)
     {
         public static implicit operator ClientLogDisconnect(byte[] buffer)
         {
@@ -8,10 +8,6 @@
         }
 
         public uint Reason { get; private set; }
-
-        public ClientLogDisconnect(byte[] buffer) : base(buffer)
-        {
-        }
 
         protected override void Read()
         {

@@ -52,13 +52,9 @@ namespace Networking
                     processedBytes += bytesToRead;
                 }
 
-                Console.WriteLine($"[{GetType().Name}] read header bytes");
-
                 // Payload has been not been fully read yet but we ran out of bytes to read. Wait for the next stream input
                 if (header.Length != headerBytesReceived)
                     return;
-
-                Console.WriteLine($"[{GetType().Name}] header has been fully read");
 
                 // We will now extract the packet size and opcode from the header and initialize the payload buffer
                 if (payload == null)
@@ -83,8 +79,6 @@ namespace Networking
                 if (payload.Length != payloadBytesReceived)
                     return;
 
-                Console.WriteLine($"[{GetType().Name}] payload has been fully read - reading content");
-
                 // We expect the first packet to initialize the connection.
                 if (!_connectionInitialized)
                 {
@@ -100,14 +94,14 @@ namespace Networking
                     _connectionInitialized = true;
                     header = null;
                     payload = null;
+
+                    continue;
                 }
-                else
-                {
-                    Console.WriteLine($"[{GetType().Name}] handle packet for opcode {cmd}");
-                    Session?.HandlePacket(cmd, payload);
-                    header = null;
-                    payload = null;
-                }
+
+
+                Session?.HandlePacket(cmd, payload);
+                header = null;
+                payload = null;
             }
         }
 
