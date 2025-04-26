@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace Packets
+namespace Core.Packets
 {
     public abstract class ServerPacket
     {

@@ -1,5 +1,5 @@
-﻿using Database.LoginDatabase.Tables;
-using Packets;
+﻿using Core.Packets;
+using Database.LoginDatabase.Tables;
 
 namespace Core.Networking
 {
@@ -20,7 +20,7 @@ namespace Core.Networking
             Task.Run(() => SendPacketAsync(packet), _cancellationTokenSource.Token);
         }
 
-        public void Close()
+        public virtual void Close()
         {
             if (_cancellationTokenSource.IsCancellationRequested)
                 return;

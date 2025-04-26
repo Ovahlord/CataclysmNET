@@ -1,11 +1,8 @@
-﻿using Packets;
-using System.Net.Sockets;
-using System;
-using System.Buffers;
+﻿using System.Net.Sockets;
 using Packets.GamePackets;
 using System.Buffers.Binary;
-using System.Reflection.Emit;
 using Core.Cryptography;
+using Core.Packets;
 
 namespace Core.Networking
 {

@@ -1,4 +1,6 @@
-﻿namespace Packets.GamePackets
+﻿using Core.Packets;
+
+namespace Packets.GamePackets
 {
     public sealed class ClientLogDisconnect(byte[] buffer) : ClientPacket(buffer)
     {

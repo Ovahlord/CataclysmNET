@@ -1,4 +1,5 @@
-﻿using Core.Packets.Opcodes;
+﻿using Core.Packets;
+using Core.Packets.Opcodes;
 
 namespace Packets.GamePackets
 {

@@ -444,7 +444,7 @@
         CMSG_REQUEST_VEHICLE_NEXT_SEAT                    = 0x4434, // NYI
         CMSG_REQUEST_VEHICLE_PREV_SEAT                    = 0x4C04, // NYI
         CMSG_REQUEST_VEHICLE_SWITCH_SEAT                  = 0x4C14, // NYI
-        CMSG_RESET_FACTION_CHEAT                          = 0x4469, // NYI
+        CMSG_SUSPEND_COMMS_ACK                            = 0x4469, // NYI
         CMSG_RESET_INSTANCES                              = 0x6E14, // NYI
         CMSG_RESURRECT_RESPONSE                           = 0x6827, // NYI
         CMSG_RETURN_TO_GRAVEYARD                          = 0x301E, // NYI

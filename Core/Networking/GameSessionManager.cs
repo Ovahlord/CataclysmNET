@@ -7,6 +7,14 @@ namespace Core.Networking
         private static readonly ConcurrentDictionary<long, GameSession> _activeSessions = [];
         private static readonly ConcurrentDictionary<long, GameSession> _pendingSessions = [];
 
+        public static void SetActiveSession(long gameAccountId, GameSession? activeSession)
+        {
+            if (activeSession != null && _activeSessions.TryGetValue(gameAccountId, out GameSession? currentSession))
+                _activeSessions.TryUpdate(gameAccountId, activeSession, currentSession);
+            else if (activeSession == null)
+                _activeSessions.TryRemove(gameAccountId, out _);
+        }
+
         /*
          * The client acts as following: when a new session has been established it is inactive at the moment.
          * We have to send SMSG_SUSPEND_COMMS to the currently active session so its socket will be disconnected.
@@ -16,10 +24,9 @@ namespace Core.Networking
 
         public static void InitiateSessionJump(long gameAccountId, GameSession newSession)
         {
-            bool success = _pendingSessions.TryAdd(gameAccountId, newSession);
-            if (!success)
+            if (!_pendingSessions.TryAdd(gameAccountId, newSession))
             {
-                Console.WriteLine("[{GameSessionManager] Could not prepare a new session because there already was a pending session!");
+                Console.WriteLine("[GameSessionManager] Could not prepare a new session because there already was a pending session!");
                 return;
             }
 
@@ -30,19 +37,27 @@ namespace Core.Networking
 
         public static void FinalizeSessionJump(long gameAccountId)
         {
-            if (_activeSessions.TryGetValue(gameAccountId, out GameSession? currentSession))
+            // There is no active session
+            _activeSessions.TryGetValue(gameAccountId, out GameSession? currentSession);
+
+            if (!_pendingSessions.TryGetValue(gameAccountId, out GameSession? pendingSession))
+                return;
+
+            if (currentSession == null)
             {
-                // Make sure that the session and socket are closed. Should be triggered by the client but just in case...
+                // The current session does not exist and the client attempts to fall back to a new session
+                // @todo
+                return;
+            }
+
+            if (_activeSessions.TryUpdate(gameAccountId, pendingSession, currentSession))
+            {
+                // Make sure the supsended session is actually closed to prevent exploits.
                 currentSession.Close();
 
-                if (_pendingSessions.TryGetValue(gameAccountId, out GameSession? pendingSession))
-                {
-                    currentSession = pendingSession;
-                    // Sending SMSG_RESUME_COMMS to the new socket to take over the sending and receiving
-                    currentSession.SendResumeComms();
-
-                    _pendingSessions.Remove(gameAccountId, out _);
-                }
+                // Send SMSG_RESUME_COMMS to tell the socket to start sending and receiving
+                pendingSession.SendResumeComms();
+                _pendingSessions.TryRemove(gameAccountId, out _);
             }
         }
     }

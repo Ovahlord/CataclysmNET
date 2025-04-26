@@ -1,4 +1,6 @@
-﻿namespace Packets.LoginPackets
+﻿using Core.Packets;
+
+namespace Packets.LoginPackets
 {
     public sealed class ClientRealmList(byte[] buffer) : ClientPacket(buffer)
     {

@@ -1,4 +1,6 @@
-﻿namespace Packets.GamePackets
+﻿using Core.Packets;
+
+namespace Packets.GamePackets
 {
     public sealed class ClientConnectionInitialize(byte[] buffer) : ClientPacket(buffer)
     {

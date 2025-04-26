@@ -1,4 +1,4 @@
-﻿using Packets;
+﻿using Core.Packets;
 
 namespace Packets.GamePackets
 {

@@ -1,4 +1,4 @@
-﻿using Packets;
+﻿using Core.Packets;
 using System.Net.Sockets;
 
 namespace Core.Networking
