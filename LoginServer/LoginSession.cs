@@ -142,7 +142,7 @@ namespace LoginServer
                 };
 
                 SendPacket(packet);
-            });
+            }, _cancellationTokenSource.Token);
         }
 
         private void HandleAuthLogonProof(ClientAuthLogonProof logonProof)
@@ -166,7 +166,6 @@ namespace LoginServer
                     return;
                 }
 
-
                 using LoginDatabaseContext loginDatabase = new();
                 _gameAccount = await loginDatabase.GameAccounts.FirstOrDefaultAsync(ga => ga.Login.Equals(_gameAccount.Login));
 
@@ -189,7 +188,7 @@ namespace LoginServer
                 };
 
                 SendPacket(packet);
-            });
+            }, _cancellationTokenSource.Token);
         }
 
         public void HandleRealmList(ClientRealmList realmList)

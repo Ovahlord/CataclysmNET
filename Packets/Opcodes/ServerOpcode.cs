@@ -50,7 +50,7 @@ namespace Packets.Opcodes
         SMSG_AURA_UPDATE                                  = 0x4707, // NYI
         SMSG_AURA_UPDATE_ALL                              = 0x6916, // NYI
         SMSG_AUTH_CHALLENGE                               = 0x4542,
-        SMSG_AUTH_RESPONSE                                = 0x5DB6, // NYI
+        SMSG_AUTH_RESPONSE                                = 0x5DB6,
         SMSG_AVAILABLE_VOICE_CHANNEL                      = 0x2E16, // NYI
         SMSG_AVERAGE_ITEM_LEVEL_INFORM                    = 0x5DA7, // NYI
         SMSG_BARBER_SHOP_RESULT                           = 0x6125, // NYI

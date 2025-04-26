@@ -85,15 +85,12 @@ namespace Networking
                 {
                     if (!ReadConnectionInitialize(payload))
                     {
-                        Console.WriteLine($"[{GetType().Name}] connection initialization from client failed.");
                         Close();
                         return;
                     }
 
-                    Console.WriteLine($"[{GetType().Name}] connection successfully initialized");
                     header = null;
                     payload = null;
-
                     continue;
                 }
 
@@ -109,8 +106,8 @@ namespace Networking
             byte[] payload = packet.Write().GetRawPacket();
             byte[] header = ServerPacket.BuildHeader(payload.Length + (_connectionInitialized ? 2 : 0), packet.Cmd);
 
-            if (_packetCrypt != null && _packetCrypt.Initialized)
-                _packetCrypt.EncryptSend(header);
+            // Encrypt the header when the session key has been validated
+            _packetCrypt?.EncryptSend(header);
 
             byte[] packetData = new byte[payload.Length + header.Length];
             Buffer.BlockCopy(header, 0, packetData, 0, header.Length);
@@ -127,6 +124,11 @@ namespace Networking
             };
 
             Task.Run(() => SendPacketAsync(packet), _cancellationTokenSource.Token);
+        }
+
+        public void InitializePacketCrypt(byte[] sessionKey)
+        {
+            _packetCrypt = new(sessionKey);
         }
 
         private bool ReadConnectionInitialize(ClientConnectionInitialize connectionInitialize)
@@ -153,8 +155,8 @@ namespace Networking
                 return;
             }
 
-            if (_packetCrypt != null && _packetCrypt.Initialized)
-                _packetCrypt.DecryptRecv(header);
+            // Decrypt the header when the session key has been validated
+            _packetCrypt?.DecryptRecv(header);
 
             Array.Reverse(header, 0, 2);
             ReadOnlySpan<byte> sizeSpan = new(header, 0, 2);

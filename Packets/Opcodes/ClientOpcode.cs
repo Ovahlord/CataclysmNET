@@ -40,7 +40,7 @@ namespace Packets.Opcodes
         CMSG_AUCTION_REMOVE_ITEM                          = 0x6426, // NYI
         CMSG_AUCTION_SELL_ITEM                            = 0x4A06, // NYI
         CMSG_AUTH_CONTINUED_SESSION                       = 0x044D, // NYI
-        CMSG_AUTH_SESSION                                 = 0x0449, // NYI
+        CMSG_AUTH_SESSION                                 = 0x0449,
         CMSG_AUTOBANK_ITEM                                = 0x2537, // NYI
         CMSG_AUTOEQUIP_GROUND_ITEM                        = 0x0000, // NYI
         CMSG_AUTOEQUIP_ITEM                               = 0x4304, // NYI

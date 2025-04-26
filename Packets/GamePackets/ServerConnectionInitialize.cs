@@ -2,9 +2,7 @@
 {
     public sealed class ServerConnectionInitialize : ServerPacket
     {
-        public ServerConnectionInitialize() : base(50)
-        {
-        }
+        public ServerConnectionInitialize() : base(50) { }
 
         public string ConnectionInitialize { get; set; } = string.Empty;
 

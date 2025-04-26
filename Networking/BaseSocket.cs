@@ -40,8 +40,6 @@ namespace Networking
                         return;
                     }
 
-                    Console.WriteLine($"[{GetType().Name}] Received {bytesReceived} bytes from tcp stream");
-
                     // Create a session when we receive our first data
                     if (Session == null)
                         Session = CreateSession();

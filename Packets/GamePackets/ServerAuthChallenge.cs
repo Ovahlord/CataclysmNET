@@ -9,6 +9,7 @@ namespace Packets.GamePackets
         public byte DosZeroBits { get; set; }
 
         public ServerAuthChallenge() : base(32 + 4 + 1, (int)ServerOpcode.SMSG_AUTH_CHALLENGE) { }
+
         public override ServerPacket Write()
         {
             foreach (uint challenge in DosChallenge)

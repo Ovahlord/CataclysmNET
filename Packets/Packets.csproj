@@ -11,4 +11,8 @@
     <ProjectReference Include="..\Shared\Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="GamePackets\Substructures\" />
+  </ItemGroup>
+
 </Project>

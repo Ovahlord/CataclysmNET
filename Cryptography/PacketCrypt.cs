@@ -6,15 +6,16 @@ namespace Cryptography
 {
     public class PacketCrypt
     {
-        public bool Initialized { get; private set; } = false;
+        public PacketCrypt(byte[] sessionKey)
+        {
+            Init(sessionKey);
+        }
 
         private readonly ARC4 _clientDecrypt = new();
         private readonly ARC4 _serverEncrypt = new();
 
-        public void Init(byte[] K)
+        private void Init(byte[] K)
         {
-            Console.WriteLine("[PacketCrypt] Initializing packet crypt");
-
             byte[] serverEncryptionKey = [0xCC, 0x98, 0xAE, 0x04, 0xE8, 0x97, 0xEA, 0xCA, 0x12, 0xDD, 0xC0, 0x93, 0x42, 0x91, 0x53, 0x57];
             byte[] serverDecryptionKey = [0xC2, 0xB3, 0x72, 0x3C, 0xC6, 0xAE, 0xD9, 0xB5, 0x34, 0x3C, 0x53, 0xEE, 0x2F, 0x43, 0x67, 0xCE];
 
@@ -25,8 +26,6 @@ namespace Cryptography
             byte[] syncBuf = new byte[1024];
             _serverEncrypt.UpdateData(syncBuf);
             _clientDecrypt.UpdateData(syncBuf);
-
-            Initialized = true;
         }
 
         private byte[] GetHMACSHA1Digest(byte[] key, byte[] data)
