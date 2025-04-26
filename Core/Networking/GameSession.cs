@@ -1,6 +1,5 @@
 ﻿using Packets;
 using Packets.GamePackets;
-using Packets.Opcodes;
 using Shared.Enums;
 using System.Security.Cryptography;
 using System.Numerics;
@@ -10,8 +9,9 @@ using Database.LoginDatabase.Tables;
 using Microsoft.EntityFrameworkCore;
 using Org.BouncyCastle.Crypto.Digests;
 using System.Text;
+using Core.Packets.Opcodes;
 
-namespace Networking
+namespace Core.Networking
 {
     /// <summary>
     /// A special derived base socket which serves as base class for Realms and Worlds.

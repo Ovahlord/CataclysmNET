@@ -7,12 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Cryptography\Cryptography.csproj" />
-    <ProjectReference Include="..\Shared\Shared.csproj" />
+    <PackageReference Include="BouncyCastle.Cryptography" Version="2.5.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="GamePackets\Substructures\" />
+    <ProjectReference Include="..\Database\Database.csproj" />
   </ItemGroup>
 
 </Project>

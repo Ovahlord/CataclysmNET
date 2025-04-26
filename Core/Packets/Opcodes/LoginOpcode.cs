@@ -1,4 +1,4 @@
-﻿namespace Packets.Opcodes
+﻿namespace Core.Packets.Opcodes
 {
     public enum LoginOpcode
     {

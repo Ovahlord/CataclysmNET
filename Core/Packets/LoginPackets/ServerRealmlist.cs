@@ -1,4 +1,4 @@
-﻿using Packets.Opcodes;
+﻿using Core.Packets.Opcodes;
 using Shared.Enums;
 
 namespace Packets.LoginPackets

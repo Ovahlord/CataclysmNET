@@ -1,15 +1,15 @@
-﻿using Cryptography;
-using Database.LoginDatabase;
+﻿using Database.LoginDatabase;
 using Database.LoginDatabase.Tables;
 using Database.RealmDatabase.Tables;
 using LoginServer.Enums;
 using Microsoft.EntityFrameworkCore;
-using Networking;
 using Packets;
 using Packets.LoginPackets;
-using Packets.Opcodes;
 using Shared.Enums;
 using System.Text;
+using Core.Networking;
+using Core.Cryptography;
+using Core.Packets.Opcodes;
 
 namespace LoginServer
 {

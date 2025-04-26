@@ -8,9 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Cryptography\Cryptography.csproj" />
-    <ProjectReference Include="..\Networking\Networking.csproj" />
-    <ProjectReference Include="..\Packets\Packets.csproj" />
+    <ProjectReference Include="..\Core\Core.csproj" />
   </ItemGroup>
 
 </Project>

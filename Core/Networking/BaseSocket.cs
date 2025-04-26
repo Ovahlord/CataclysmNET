@@ -1,7 +1,7 @@
 ﻿using Packets;
 using System.Net.Sockets;
 
-namespace Networking
+namespace Core.Networking
 {
     /// <summary>
     /// The base socket class handles the lower level networking operations. It creates a session that handles the high level operations, such as packet handling

@@ -1,7 +1,5 @@
-﻿using Networking;
-using Packets.GamePackets;
-using Packets.Opcodes;
-using Shared.Enums;
+﻿using Core.Networking;
+using Core.Packets.Opcodes;
 
 namespace RealmServer
 {

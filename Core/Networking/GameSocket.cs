@@ -5,9 +5,9 @@ using System.Buffers;
 using Packets.GamePackets;
 using System.Buffers.Binary;
 using System.Reflection.Emit;
-using Cryptography;
+using Core.Cryptography;
 
-namespace Networking
+namespace Core.Networking
 {
 
     /// <summary>

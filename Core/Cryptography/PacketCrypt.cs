@@ -2,7 +2,7 @@
 using Org.BouncyCastle.Crypto.Macs;
 using Org.BouncyCastle.Crypto.Parameters;
 
-namespace Cryptography
+namespace Core.Cryptography
 {
     public class PacketCrypt
     {

@@ -7,7 +7,7 @@ using Salt = byte[];
 using Verifier = byte[];
 using EphemeralKey = byte[];
 
-namespace Cryptography
+namespace Core.Cryptography
 {
     public sealed class SRP6
     {

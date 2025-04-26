@@ -1,6 +1,6 @@
 ﻿using Packets;
 
-namespace Networking
+namespace Core.Networking
 {
     public abstract class BaseSession(BaseSocket socket)
     {

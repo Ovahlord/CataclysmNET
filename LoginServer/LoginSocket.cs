@@ -1,6 +1,6 @@
-﻿using Networking;
-using Packets.Opcodes;
-using System.Net.Sockets;
+﻿using System.Net.Sockets;
+using Core.Networking;
+using Core.Packets.Opcodes;
 
 namespace LoginServer
 {

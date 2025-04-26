@@ -1,7 +1,7 @@
 ﻿using Org.BouncyCastle.Crypto.Engines;
 using Org.BouncyCastle.Crypto.Parameters;
 
-namespace Cryptography
+namespace Core.Cryptography
 {
     public sealed class ARC4
     {

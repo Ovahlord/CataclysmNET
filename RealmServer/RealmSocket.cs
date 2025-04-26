@@ -1,5 +1,5 @@
-﻿using Networking;
-using System.Net.Sockets;
+﻿using System.Net.Sockets;
+using Core.Networking;
 
 namespace RealmServer
 {

@@ -1,5 +1,5 @@
-﻿using Packets.GamePackets.Substructures;
-using Packets.Opcodes;
+﻿using Core.Packets.Opcodes;
+using Packets.GamePackets.Substructures;
 
 namespace Packets.GamePackets
 {
