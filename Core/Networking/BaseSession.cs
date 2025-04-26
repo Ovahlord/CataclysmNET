@@ -8,6 +8,21 @@ namespace Core.Networking
         protected BaseSocket Socket => socket;
 
         public abstract void HandlePacket(int opcode, byte[] payload);
-        public abstract void SendPacket(ServerPacket packet);
+
+        public async Task SendPacketAsync(ServerPacket packet, CancellationToken cancellationToken = default)
+        {
+            await Socket.SendPacketAsync(packet, cancellationToken);
+        }
+
+        public void SendPacket(ServerPacket packet)
+        {
+            Task.Run(() => SendPacketAsync(packet), _cancellationTokenSource.Token);
+        }
+
+        public void Close()
+        {
+            Socket.Close();
+            _cancellationTokenSource.Cancel();
+        }
     }
 }

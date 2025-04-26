@@ -16,27 +16,31 @@ namespace Core.Networking
     /// </summary>
     public abstract class GameSocket(TcpClient client) : BaseSocket(client)
     {
+        // Connection strings required by the client to establish a game connection
         private static readonly string _serverConnectionInitialize = "WORLD OF WARCRAFT CONNECTION - SERVER TO CLIENT";
         private static readonly string _clientConnectionInitialize = "WORLD OF WARCRAFT CONNECTION - CLIENT TO SERVER";
 
+        // Packet utilities required to determine and read header data
         private PacketCrypt? _packetCrypt = null;
         private bool _connectionInitialized = false;
+        private int _cmd = 0;
+        private int HeaderSize { get { return _connectionInitialized ? 6 : 2; } }
 
+        // Buffers for reading headers and payloads
         byte[]? header = null;
         int headerBytesReceived = 0;
 
         byte[]? payload = null;
         int payloadBytesReceived = 0;
 
-        int cmd = 0;
-        private int HeaderSize { get { return _connectionInitialized ? 6 : 2; } }
-
         public override void DataReceived(byte[] data, int dataLength)
         {
             int processedBytes = 0;
 
+            // We use a while loop here because a streamed message chunk may cointain multiple packets
             while (!_cancellationTokenSource.IsCancellationRequested && processedBytes < dataLength)
             {
+                // Prepare a new header buffer to read
                 if (header == null)
                 {
                     header = new byte[HeaderSize];
@@ -53,7 +57,7 @@ namespace Core.Networking
                     processedBytes += bytesToRead;
                 }
 
-                // Payload has been not been fully read yet but we ran out of bytes to read. Wait for the next stream input
+                // Header has been not been fully read yet but we ran out of bytes to read. Wait for the next stream input
                 if (header.Length != headerBytesReceived)
                     return;
 
@@ -61,12 +65,20 @@ namespace Core.Networking
                 if (payload == null)
                 {
                     payloadBytesReceived = 0;
-                    ReadHeader(out int payloadSize, out cmd);
+                    ReadHeader(out int payloadSize, out _cmd);
                     payload = new byte[payloadSize];
                 }
 
-                Console.WriteLine($"[{GetType().Name}] extracted payload size ({payload.Length}) and opcode ({cmd}) from header");
+                Console.WriteLine($"[{GetType().Name}] extracted payload size ({payload.Length}) and opcode ({_cmd}) from header");
 
+                // If the method ReadHeader returned a -1 as cmd, it implies that the header is either malformed, invalid or broken. Cancel right here.
+                if (_cmd == -1)
+                {
+                    Close();
+                    return;
+                }
+
+                // Extract the payload from the streamed buffer
                 if (payload.Length != payloadBytesReceived)
                 {
                     int remainingPayloadBytes = payload.Length - payloadBytesReceived;
@@ -95,13 +107,13 @@ namespace Core.Networking
                 }
 
 
-                Session?.HandlePacket(cmd, payload);
+                Session?.HandlePacket(_cmd, payload);
                 header = null;
                 payload = null;
             }
         }
 
-        public override async Task SendPacketAsync(ServerPacket packet)
+        public override async Task SendPacketAsync(ServerPacket packet, CancellationToken cancellation = default)
         {
             byte[] payload = packet.Write().GetRawPacket();
             byte[] header = ServerPacket.BuildHeader(payload.Length + (_connectionInitialized ? 2 : 0), packet.Cmd);
@@ -113,7 +125,7 @@ namespace Core.Networking
             Buffer.BlockCopy(header, 0, packetData, 0, header.Length);
             Buffer.BlockCopy(payload, 0, packetData, header.Length, payload.Length);
 
-            await WriteDataToStreamAsync(packetData);
+            await WriteDataToStreamAsync(packetData, cancellation);
         }
 
         public void SendConnectionInitialize()

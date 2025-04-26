@@ -11,12 +11,18 @@ namespace Core.Networking
         protected readonly CancellationTokenSource _cancellationTokenSource = new();
         public BaseSession? Session { get; private set; }
 
+        /// <summary>
+        /// Initializes the stream reading task so it can received packets from the client
+        /// </summary>
         public void Start()
         {
             Console.WriteLine($"[{GetType().Name}] Started socket for client {client.Client.RemoteEndPoint}");
             Task.Run(ReadDataFromStream, _cancellationTokenSource.Token);
         }
 
+        /// <summary>
+        /// Cancels the stream reading task so it can no longer received packets from the client and closes it afterwards
+        /// </summary>
         public void Close()
         {
             Console.WriteLine($"[{GetType().Name}] Closed socket for client {client.Client.RemoteEndPoint}");
@@ -24,7 +30,10 @@ namespace Core.Networking
             client.Close();
         }
 
-        public async Task ReadDataFromStream()
+        /// <summary>
+        /// Reads buffered data from the Tcp stream which has been sent by the client
+        /// </summary>
+        private async Task ReadDataFromStream()
         {
             try
             {
@@ -57,21 +66,25 @@ namespace Core.Networking
             }
         }
 
-        public async Task WriteDataToStreamAsync(ReadOnlyMemory<byte> data)
+        /// <summary>
+        /// Writes buffered data to the Tcp stream which will be received by the client
+        /// </summary>
+        protected async Task WriteDataToStreamAsync(ReadOnlyMemory<byte> data, CancellationToken cancellationToken = default)
         {
             try
             {
-                await client.GetStream().WriteAsync(data, _cancellationTokenSource.Token);
+                await client.GetStream().WriteAsync(data, cancellationToken);
             }
+            catch (OperationCanceledException) { }
             catch (Exception ex)
             {
                 Console.WriteLine(ex);
             }
         }
 
-        public virtual async Task SendPacketAsync(ServerPacket packet)
+        public virtual async Task SendPacketAsync(ServerPacket packet, CancellationToken cancellationToken = default)
         {
-            await WriteDataToStreamAsync(packet.Write().GetRawPacket());
+            await WriteDataToStreamAsync(packet.Write().GetRawPacket(), cancellationToken);
         }
 
         public abstract BaseSession CreateSession();

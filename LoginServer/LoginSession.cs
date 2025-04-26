@@ -25,15 +25,6 @@ namespace LoginServer
             Console.WriteLine($"[{GetType().Name}] Called packet handler for opcode: {(LoginOpcode)opcode}\n");
             CallPacketHandler((LoginOpcode)opcode, payload);
         }
-        public override void SendPacket(ServerPacket packet)
-        {
-            try
-            {
-                Task.Run(() => Socket.SendPacketAsync(packet), _cancellationTokenSource.Token);
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception) { throw; }
-        }
 
         private void CallPacketHandler(LoginOpcode opcode, byte[] payload)
         {
@@ -83,27 +74,28 @@ namespace LoginServer
 
             _loginState = LoginState.Challenge;
 
+            Array.Reverse(logonChallenge.GameName);
+            Array.Reverse(logonChallenge.OS);
+            Array.Reverse(logonChallenge.Platform);
+            Array.Reverse(logonChallenge.Locale);
+
+            string gameName = Encoding.UTF8.GetString(logonChallenge.GameName);
+            string os = Encoding.UTF8.GetString(logonChallenge.OS);
+            string platform = Encoding.UTF8.GetString(logonChallenge.Platform);
+            string locale = Encoding.UTF8.GetString(logonChallenge.Locale);
+
+            Console.WriteLine($"[{GetType().Name}] |========== ClientAuthLogonChallenge =============");
+            Console.WriteLine($"[{GetType().Name}] | Login: {logonChallenge.Login}");
+            Console.WriteLine($"[{GetType().Name}] | Game Name: {gameName}");
+            Console.WriteLine($"[{GetType().Name}] | OS: {os}");
+            Console.WriteLine($"[{GetType().Name}] | Platform: {platform}");
+            Console.WriteLine($"[{GetType().Name}] | Locale: {locale}");
+            Console.WriteLine($"[{GetType().Name}] | Version: {logonChallenge.MajorVersion}.{logonChallenge.MinorVersion}.{logonChallenge.BugfixVersion}.{logonChallenge.Build}");
+            Console.WriteLine($"[{GetType().Name}] |=================================================");
+
             Task.Run(async () =>
             {
-                Array.Reverse(logonChallenge.GameName);
-                Array.Reverse(logonChallenge.OS);
-                Array.Reverse(logonChallenge.Platform);
-                Array.Reverse(logonChallenge.Locale);
-
-                string gameName = Encoding.UTF8.GetString(logonChallenge.GameName);
-                string os = Encoding.UTF8.GetString(logonChallenge.OS);
-                string platform = Encoding.UTF8.GetString(logonChallenge.Platform);
-                string locale = Encoding.UTF8.GetString(logonChallenge.Locale);
-
-                Console.WriteLine($"[{GetType().Name}] |========== ClientAuthLogonChallenge =============");
-                Console.WriteLine($"[{GetType().Name}] | Login: {logonChallenge.Login}");
-                Console.WriteLine($"[{GetType().Name}] | Game Name: {gameName}");
-                Console.WriteLine($"[{GetType().Name}] | OS: {os}");
-                Console.WriteLine($"[{GetType().Name}] | Platform: {platform}");
-                Console.WriteLine($"[{GetType().Name}] | Locale: {locale}");
-                Console.WriteLine($"[{GetType().Name}] | Version: {logonChallenge.MajorVersion}.{logonChallenge.MinorVersion}.{logonChallenge.BugfixVersion}.{logonChallenge.Build}");
-                Console.WriteLine($"[{GetType().Name}] |=================================================");
-
+                // Try to receive the game account by account name
                 using LoginDatabaseContext loginDatabase = new();
                 _gameAccount = await loginDatabase.GameAccounts.FirstOrDefaultAsync(ga => ga.Login.Equals(logonChallenge.Login));
 
@@ -141,7 +133,7 @@ namespace LoginServer
                     Srp6Data = new(_srp6.B, SRP6.g, SRP6.N, _srp6.s, _versionChallenge)
                 };
 
-                SendPacket(packet);
+                await SendPacketAsync(packet, _cancellationTokenSource.Token);
             }, _cancellationTokenSource.Token);
         }
 
@@ -152,20 +144,20 @@ namespace LoginServer
 
             _loginState = LoginState.Proof;
 
+            if (_srp6 == null || _gameAccount == null)
+            {
+                SendLoginFailed(LoginOpcode.AuthLogonProof, LoginResult.WowFailFailNoaccess);
+                return;
+            }
+
+            if (!_srp6.VerifyChallengeResponse(logonProof.A, logonProof.ClientM, out byte[]? sessionKey) || sessionKey == null)
+            {
+                SendLoginFailed(LoginOpcode.AuthLogonProof, LoginResult.WowFailIncorrectPassword);
+                return;
+            }
+
             Task.Run(async () =>
             {
-                if (_srp6 == null || _gameAccount == null)
-                {
-                    SendLoginFailed(LoginOpcode.AuthLogonProof, LoginResult.WowFailFailNoaccess);
-                    return;
-                }
-
-                if (!_srp6.VerifyChallengeResponse(logonProof.A, logonProof.ClientM, out byte[]? sessionKey) || sessionKey == null)
-                {
-                    SendLoginFailed(LoginOpcode.AuthLogonProof, LoginResult.WowFailIncorrectPassword);
-                    return;
-                }
-
                 using LoginDatabaseContext loginDatabase = new();
                 _gameAccount = await loginDatabase.GameAccounts.FirstOrDefaultAsync(ga => ga.Login.Equals(_gameAccount.Login));
 
@@ -187,7 +179,7 @@ namespace LoginServer
                     LoginFlags = 0
                 };
 
-                SendPacket(packet);
+                await SendPacketAsync(packet, _cancellationTokenSource.Token);
             }, _cancellationTokenSource.Token);
         }
 

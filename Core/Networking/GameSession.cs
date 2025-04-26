@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Org.BouncyCastle.Crypto.Digests;
 using System.Text;
 using Core.Packets.Opcodes;
+using Org.BouncyCastle.Bcpg;
 
 namespace Core.Networking
 {
@@ -28,16 +29,6 @@ namespace Core.Networking
         {
             Console.WriteLine($"[{GetType().Name}] Called packet handler for opcode: {(ClientOpcode)opcode}\n");
             CallPacketHandler((ClientOpcode)opcode, payload);
-        }
-
-        public override void SendPacket(ServerPacket packet)
-        {
-            try
-            {
-                Task.Run(() => Socket.SendPacketAsync(packet), _cancellationTokenSource.Token);
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception) { throw; }
         }
 
         /// <summary>
@@ -68,7 +59,7 @@ namespace Core.Networking
                 using LoginDatabaseContext loginDatabase = new();
                 _gameAccount = await loginDatabase.GameAccounts.FirstOrDefaultAsync(ga => ga.Login == authSession.Account);
 
-                // Hacking attempt - no account like this exists
+                // Hacking attempt - no account exists
                 if (_gameAccount == null)
                 {
                     SendAuthResponseError(ResponseCodes.AUTH_UNKNOWN_ACCOUNT);
