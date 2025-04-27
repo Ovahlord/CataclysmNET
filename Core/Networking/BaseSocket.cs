@@ -16,7 +16,7 @@ namespace Core.Networking
         /// </summary>
         public void Start()
         {
-            Console.WriteLine($"[{GetType().Name}] Started socket for client {client.Client.RemoteEndPoint}");
+            Console.WriteLine($"[{GetType().Name}] Started socket on endpoint{client.Client.LocalEndPoint} for client {client.Client.RemoteEndPoint}");
             Task.Run(ReadDataFromStream, _cancellationTokenSource.Token);
         }
 

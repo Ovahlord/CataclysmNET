@@ -81,7 +81,7 @@ namespace Core.Packets.GamePackets
 
         #endregion
 
-        private static readonly byte[] _haiku = Encoding.UTF8.GetBytes("World torn asunder\nDarkness descends on the land\nDeathwing has returned\n\0\0");
+        private static readonly string _haiku = "World torn asunder\nDarkness descends on the land\nDeathwing has returned\n\0\0";
 
         private static readonly byte[] _piDigits =
         [
@@ -102,12 +102,11 @@ namespace Core.Packets.GamePackets
             0x21, 0x33
         ];
 
-        private static readonly BigInteger _p = new(P, true);
-        private static readonly BigInteger _q = new(Q, true);
-        private static readonly BigInteger _dmp1 = new(DP, true);
-        private static readonly BigInteger _dmq1 = new(DQ, true);
-        private static readonly BigInteger _iqmp = new(InverseQ, true);
-
+        private static readonly BigInteger _p = new(P, true, true);
+        private static readonly BigInteger _q = new(Q, true, true);
+        private static readonly BigInteger _dmp1 = new(DP, true, true);
+        private static readonly BigInteger _dmq1 = new(DQ, true, true);
+        private static readonly BigInteger _iqmp = new(InverseQ, true, true);
 
         public ulong Key { get; set; }
         public uint Serial { get; set; }
@@ -126,79 +125,76 @@ namespace Core.Packets.GamePackets
 
             uint addressType = 3;
             if (Payload.Where.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
-            {
                 addressType = 1;
-            }
             else if (Payload.Where.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
-            {
                 addressType = 2;
-            }
 
-            int port = Payload.Where.Port;
+            ushort port = (ushort)Payload.Where.Port;
+            byte[] haiku = Encoding.ASCII.GetBytes(_haiku);
 
             HMac hmac = new(new Sha1Digest());
             hmac.Init(new KeyParameter(WherePacketHmac));
 
-            hmac.BlockUpdate(address, 0, 16);
+            hmac.BlockUpdate(address, 0, address.Length);
             hmac.BlockUpdate(BitConverter.GetBytes(addressType), 0, 4);
-            hmac.BlockUpdate(BitConverter.GetBytes(Payload.Where.Port), 0, 2);
-            hmac.BlockUpdate(_haiku, 0, 73);
-            hmac.BlockUpdate(_piDigits, 0, 142);
-            hmac.Update(Payload.XorMagic);
+            hmac.BlockUpdate(BitConverter.GetBytes(port), 0, 2);
+            hmac.BlockUpdate(haiku, 0, 73);
+            hmac.BlockUpdate(_piDigits, 0, _piDigits.Length);
+            hmac.BlockUpdate([Payload.XorMagic], 0, 1);
 
             byte[] hmacResult = new byte[hmac.GetMacSize()];
             hmac.DoFinal(hmacResult, 0);
 
             WriteByte(_piDigits[30]);
-            WriteByte(_haiku[31]);
+            WriteByte(haiku[31]);
             WriteByte(_piDigits[21]);
             WriteByte(_piDigits[26]);
-            WriteByte(_haiku[3]);
+            WriteByte(haiku[3]);
             WriteByte(_piDigits[78]);
-            WriteByte(_haiku[16]);
-            WriteByte(_haiku[55]);
-            WriteByte(_haiku[54]);
+            WriteByte(haiku[16]);
+            WriteByte(haiku[55]);
+            WriteByte(haiku[54]);
             WriteByte(_piDigits[68]);
             WriteByte(_piDigits[59]);
             WriteByte(_piDigits[115]);
-            WriteByte(_haiku[65]);
+            WriteByte(haiku[65]);
             WriteByte(hmacResult[15]);
-            WriteByte(_haiku[25]);
+            WriteByte(haiku[25]);
             WriteByte(_piDigits[32]);
             WriteByte(_piDigits[101]);
-            WriteByte(_haiku[37]);
-            WriteByte(_haiku[20]);
-            WriteByte(_haiku[29]);
+            WriteByte(haiku[37]);
+            WriteByte(haiku[20]);
+            WriteByte(haiku[29]);
             WriteByte(_piDigits[88]);
-            WriteByte(_haiku[9]);
-            WriteByte(_haiku[63]);
+            WriteByte(haiku[9]);
+            WriteByte(haiku[63]);
             WriteByte(_piDigits[3]);
             WriteByte(_piDigits[22]);
-            WriteByte(_haiku[14]);
+            WriteByte(haiku[14]);
             WriteByte(_piDigits[38]);
             WriteByte(_piDigits[46]);
             WriteByte(address[1]);
             WriteByte(_piDigits[94]);
             WriteByte(_piDigits[96]);
             WriteByte(_piDigits[137]);
-            WriteByte(_haiku[42]);
-            WriteByte(_haiku[21]);
+            WriteByte(haiku[42]);
+            WriteByte(haiku[21]);
             WriteByte(_piDigits[13]);
             WriteByte(hmacResult[14]);
             WriteByte(_piDigits[63]);
             WriteByte(_piDigits[16]);
-            WriteByte(_haiku[5]);
+            WriteByte(haiku[5]);
             WriteByte(_piDigits[58]);
-            WriteByte(_haiku[67]);
-            WriteByte(_haiku[53]);
+            WriteByte(haiku[67]);
+            WriteByte(haiku[53]);
             WriteByte(_piDigits[79]);
             WriteByte(address[14]);
             WriteByte(address[9]);
             WriteByte(_piDigits[125]);
-            WriteByte(_haiku[24]);
-            WriteByte(_haiku[6]);
+            WriteByte(haiku[24]);
+            WriteByte(haiku[6]);
             WriteByte(_piDigits[140]);
-            WriteByte(_haiku[8]);
+            WriteByte(haiku[8]);
             WriteByte(_piDigits[112]);
             WriteByte(_piDigits[133]);
             WriteByte(_piDigits[74]);
@@ -215,26 +211,26 @@ namespace Core.Packets.GamePackets
             WriteByte(_piDigits[87]);
             WriteByte(_piDigits[28]);
             WriteByte(_piDigits[105]);
-            WriteByte(_haiku[32]);
+            WriteByte(haiku[32]);
             WriteByte(_piDigits[75]);
-            WriteByte(_haiku[46]);
+            WriteByte(haiku[46]);
             WriteByte(_piDigits[5]);
             WriteByte(_piDigits[104]);
-            WriteByte(_haiku[17]);
+            WriteByte(haiku[17]);
             WriteByte(_piDigits[64]);
-            WriteByte(_haiku[22]);
+            WriteByte(haiku[22]);
             WriteByte(address[3]);
             WriteByte((byte)(port & 0xFF));
-            WriteByte(_haiku[23]);
+            WriteByte(haiku[23]);
             WriteByte(_piDigits[0]);
             WriteByte(address[5]);
             WriteByte(_piDigits[110]);
             WriteByte(_piDigits[109]);
             WriteByte(_piDigits[93]);
-            WriteByte(_haiku[10]);
+            WriteByte(haiku[10]);
             WriteByte(Payload.XorMagic);
-            WriteByte(_haiku[26]);
-            WriteByte(_haiku[13]);
+            WriteByte(haiku[26]);
+            WriteByte(haiku[13]);
             WriteByte(_piDigits[90]);
             WriteByte(_piDigits[72]);
             WriteByte(_piDigits[6]);
@@ -242,60 +238,60 @@ namespace Core.Packets.GamePackets
             WriteByte(address[0]);
             WriteByte(_piDigits[23]);
             WriteByte(_piDigits[100]);
-            WriteByte(_haiku[39]);
+            WriteByte(haiku[39]);
             WriteByte(_piDigits[86]);
             WriteByte(_piDigits[82]);
-            WriteByte(_haiku[56]);
+            WriteByte(haiku[56]);
             WriteByte(_piDigits[95]);
             WriteByte(hmacResult[18]);
             WriteByte(_piDigits[113]);
-            WriteByte(_haiku[38]);
+            WriteByte(haiku[38]);
             WriteByte(hmacResult[8]);
             WriteByte(_piDigits[92]);
             WriteByte(_piDigits[42]);
             WriteByte(_piDigits[120]);
             WriteByte(_piDigits[55]);
             WriteByte(_piDigits[124]);
-            WriteByte(_haiku[30]);
+            WriteByte(haiku[30]);
             WriteByte(_piDigits[4]);
-            WriteByte(_haiku[18]);
+            WriteByte(haiku[18]);
             WriteByte(_piDigits[123]);
             WriteByte(address[8]);
             WriteByte(_piDigits[61]);
             WriteByte(_piDigits[122]);
-            WriteByte(_haiku[19]);
+            WriteByte(haiku[19]);
             WriteByte(_piDigits[53]);
             WriteByte(address[2]);
             WriteByte(hmacResult[11]);
             WriteByte(_piDigits[31]);
             WriteByte(_piDigits[36]);
-            WriteByte(_haiku[2]);
-            WriteByte(_haiku[57]);
-            WriteByte(_haiku[40]);
+            WriteByte(haiku[2]);
+            WriteByte(haiku[57]);
+            WriteByte(haiku[40]);
             WriteByte(_piDigits[70]);
-            WriteByte(_haiku[34]);
+            WriteByte(haiku[34]);
             WriteByte(_piDigits[132]);
             WriteByte(_piDigits[20]);
             WriteByte(_piDigits[107]);
             WriteByte(_piDigits[141]);
             WriteByte(_piDigits[97]);
             WriteByte(hmacResult[2]);
-            WriteByte(_haiku[60]);
+            WriteByte(haiku[60]);
             WriteByte(_piDigits[102]);
             WriteByte(_piDigits[116]);
             WriteByte(_piDigits[49]);
             WriteByte(_piDigits[37]);
             WriteByte(_piDigits[48]);
             WriteByte(_piDigits[18]);
-            WriteByte(_haiku[69]);
+            WriteByte(haiku[69]);
             WriteByte(hmacResult[12]);
             WriteByte(_piDigits[65]);
             WriteByte(hmacResult[3]);
-            WriteByte(_haiku[27]);
+            WriteByte(haiku[27]);
             WriteByte(_piDigits[118]);
             WriteByte(_piDigits[44]);
-            WriteByte(_haiku[50]);
-            WriteByte(_haiku[59]);
+            WriteByte(haiku[50]);
+            WriteByte(haiku[59]);
             WriteByte(_piDigits[81]);
             WriteByte(_piDigits[51]);
             WriteByte(address[4]);
@@ -304,43 +300,43 @@ namespace Core.Packets.GamePackets
             WriteByte(address[11]);
             WriteByte(_piDigits[40]);
             WriteByte(_piDigits[139]);
-            WriteByte(_haiku[51]);
-            WriteByte(_haiku[64]);
+            WriteByte(haiku[51]);
+            WriteByte(haiku[64]);
             WriteByte(_piDigits[111]);
             WriteByte(_piDigits[131]);
-            WriteByte(_haiku[1]);
-            WriteByte(_haiku[49]);
+            WriteByte(haiku[1]);
+            WriteByte(haiku[49]);
             WriteByte(_piDigits[41]);
-            WriteByte(_haiku[28]);
+            WriteByte(haiku[28]);
             WriteByte(_piDigits[77]);
             WriteByte(_piDigits[76]);
             WriteByte(_piDigits[8]);
             WriteByte(address[12]);
-            WriteByte(_haiku[62]);
+            WriteByte(haiku[62]);
             WriteByte(_piDigits[19]);
             WriteByte(_piDigits[17]);
             WriteByte(_piDigits[24]);
-            WriteByte(_haiku[72]);
+            WriteByte(haiku[72]);
             WriteByte(hmacResult[13]);
-            WriteByte(_haiku[61]);
+            WriteByte(haiku[61]);
             WriteByte(_piDigits[29]);
             WriteByte(_piDigits[15]);
             WriteByte(address[7]);
             WriteByte(_piDigits[121]);
             WriteByte(_piDigits[69]);
             WriteByte(address[13]);
-            WriteByte(_haiku[35]);
+            WriteByte(haiku[35]);
             WriteByte(_piDigits[103]);
             WriteByte(_piDigits[39]);
             WriteByte(hmacResult[5]);
-            WriteByte(_haiku[4]);
+            WriteByte(haiku[4]);
             WriteByte(_piDigits[34]);
             WriteByte(_piDigits[56]);
-            WriteByte((byte)(port >> 8 & 0xFF));
+            WriteByte((byte)((port >> 8) & 0xFF));
             WriteByte(hmacResult[10]);
             WriteByte(_piDigits[80]);
             WriteByte(_piDigits[130]);
-            WriteByte(_haiku[12]);
+            WriteByte(haiku[12]);
             WriteByte(_piDigits[134]);
             WriteByte(_piDigits[33]);
             WriteByte(_piDigits[25]);
@@ -349,14 +345,14 @@ namespace Core.Packets.GamePackets
             WriteByte(_piDigits[9]);
             WriteByte(_piDigits[66]);
             WriteByte(_piDigits[1]);
-            WriteByte(_haiku[45]);
+            WriteByte(haiku[45]);
             WriteByte(_piDigits[126]);
             WriteByte(_piDigits[67]);
-            WriteByte(_haiku[33]);
+            WriteByte(haiku[33]);
             WriteByte(_piDigits[10]);
             WriteByte(hmacResult[4]);
             WriteByte(hmacResult[9]);
-            WriteByte(_haiku[44]);
+            WriteByte(haiku[44]);
             WriteByte(_piDigits[60]);
             WriteByte(_piDigits[98]);
             WriteByte(_piDigits[91]);
@@ -365,64 +361,67 @@ namespace Core.Packets.GamePackets
             WriteByte(_piDigits[11]);
             WriteByte(_piDigits[83]);
             WriteByte(hmacResult[0]);
-            WriteByte(_haiku[52]);
-            WriteByte(_haiku[43]);
+            WriteByte(haiku[52]);
+            WriteByte(haiku[43]);
             WriteByte(_piDigits[47]);
-            WriteByte(_haiku[11]);
+            WriteByte(haiku[11]);
             WriteByte(_piDigits[129]);
-            WriteByte(_haiku[0]);
+            WriteByte(haiku[0]);
             WriteByte(_piDigits[57]);
             WriteByte(_piDigits[7]);
             WriteByte(hmacResult[7]);
-            WriteByte(_haiku[15]);
-            WriteByte(_haiku[58]);
-            WriteByte(_haiku[66]);
+            WriteByte(haiku[15]);
+            WriteByte(haiku[58]);
+            WriteByte(haiku[66]);
             WriteByte(_piDigits[127]);
-            WriteByte(_haiku[41]);
+            WriteByte(haiku[41]);
             WriteByte(address[10]);
-            WriteByte(_haiku[71]);
+            WriteByte(haiku[71]);
             WriteByte(_piDigits[99]);
             WriteByte(_piDigits[117]);
             WriteByte(_piDigits[62]);
             WriteByte(_piDigits[89]);
-            WriteByte(_haiku[70]);
+            WriteByte(haiku[70]);
             WriteByte(hmacResult[6]);
             WriteByte(_piDigits[114]);
             WriteByte(_piDigits[106]);
             WriteByte(_piDigits[108]);
-            WriteByte(_haiku[48]);
-            WriteByte(_haiku[7]);
+            WriteByte(haiku[48]);
+            WriteByte(haiku[7]);
             WriteByte(_piDigits[2]);
             WriteByte(_piDigits[43]);
-            WriteByte(_haiku[36]);
+            WriteByte(haiku[36]);
             WriteByte(_piDigits[45]);
             WriteByte(_piDigits[119]);
-            WriteByte(_haiku[47]);
-            WriteByte(_haiku[68]);
+            WriteByte(haiku[47]);
+            WriteByte(haiku[68]);
             WriteByte(hmacResult[16]);
             WriteByte(_piDigits[128]);
             WriteByte(address[15]);
             WriteByte(_piDigits[35]);
             WriteByte(_piDigits[84]);
 
-            BigInteger bnData = new(GetRawPacket(), true);
-            Clear();
+            // Convert to BigInteger
+            BigInteger m = new(GetRawPacket(), true, true);
 
-            // Perform the operations
-            BigInteger m1 = BigInteger.ModPow(bnData % _p, _dmp1, _p);
-            BigInteger m2 = BigInteger.ModPow(bnData % _q, _dmq1, _q);
+            // Perform modular exponentiation
+            BigInteger m1 = BigInteger.ModPow(m % _p, _dmp1, _p);
+            BigInteger m2 = BigInteger.ModPow(m % _q, _dmq1, _q);
             BigInteger h = (_iqmp * (m1 - m2)) % _p;
 
-            // Ensure h is positive
-            if (h < 0)
+            // Ensure a positive remainder
+            if (h.Sign < 0)
                 h += _p;
 
-            // Calculate the final value of m
-            BigInteger m = m2 + h * _q;
+            // Combine results
+            BigInteger result = m2 + h * _q;
+            byte[] resultBytes = new byte[256];
+            result.TryWriteBytes(resultBytes, out _, true, true);
 
             WriteUInt64(Key);
             WriteUInt32(Serial);
-            WriteBytes(m.ToByteArray(true));
+            WriteBytes(resultBytes);
+            Console.WriteLine(BitConverter.ToString(resultBytes).Replace("-", ""));
             WriteByte(Con);
 
             return this;

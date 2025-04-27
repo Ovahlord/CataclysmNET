@@ -15,10 +15,15 @@ namespace RealmServer
             TcpListener listener = new(endpoint);
             listener.Start();
 
-            while (true)
+            Task.Run(async () =>
             {
-                StartSocket(listener.AcceptTcpClient());
-            }
+                while (true)
+                {
+                    StartSocket(await listener.AcceptTcpClientAsync());
+                }
+            });
+
+            Console.ReadLine();
         }
 
         private static void StartSocket(TcpClient client)
