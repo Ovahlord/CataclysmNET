@@ -10,7 +10,8 @@ namespace RealmServer
         {
             switch (opcode)
             {
-                case ClientOpcode.CMSG_ENUM_CHARACTERS: HandleEnumCharacters(payload); break;
+                case ClientOpcode.CMSG_ENUM_CHARACTERS:     HandleEnumCharacters(payload); break;
+                case ClientOpcode.CMSG_CREATE_CHARACTER:    HandleCreateCharacter(payload); break;
                 default:
                     base.CallPacketHandler(opcode, payload);
                     break;
@@ -26,6 +27,11 @@ namespace RealmServer
                 Success = true
             };
             SendPacket(packet);
+        }
+
+        private void HandleCreateCharacter(ClientCreateCharacter createCharacter)
+        {
+
         }
 
         #endregion

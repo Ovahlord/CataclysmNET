@@ -121,7 +121,7 @@
         CMSG_CHAT_CHANNEL_UNSILENCE_VOICE                 = 0x3146, // NYI
         CMSG_CHAT_CHANNEL_VOICE_OFF                       = 0x3144, // NYI
         CMSG_CHAT_CHANNEL_VOICE_ON                        = 0x1144, // NYI
-        CMSG_CHAR_CREATE                                  = 0x4A36, // NYI
+        CMSG_CREATE_CHARACTER                             = 0x4A36, // NYI
         CMSG_CHAR_CUSTOMIZE                               = 0x2C34, // NYI
         CMSG_CHAR_DELETE                                  = 0x6425, // NYI
         CMSG_CHAR_FACTION_CHANGE                          = 0x2735, // NYI
