@@ -28,9 +28,11 @@ namespace Core.Networking
         private readonly byte[] _authSeed = RandomNumberGenerator.GetBytes(4);
         private GameAccounts? _gameAccount = null;
 
+        public int SessionId { get; private set; } = GameSessionManager.SessionId;
+
         public override void HandlePacket(int opcode, byte[] payload)
         {
-            Console.WriteLine($"[{GetType().Name}] Called packet handler for opcode: {(ClientOpcode)opcode} (Size: {payload.Length})");
+            Console.WriteLine($"[{GetType().Name}] (Id: {SessionId}) Called packet handler for opcode: {(ClientOpcode)opcode} (Size: {payload.Length})");
             CallPacketHandler((ClientOpcode)opcode, payload);
         }
 
@@ -236,7 +238,7 @@ namespace Core.Networking
 
             ServerConnectTo packet = new()
             {
-                Serial = 17,
+                Serial = 14,
                 Payload = new()
                 {
                     Where = IPEndPoint.Parse("127.0.0.1:8085")

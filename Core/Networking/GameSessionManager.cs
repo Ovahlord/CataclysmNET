@@ -7,6 +7,9 @@ namespace Core.Networking
         private static readonly ConcurrentDictionary<long, GameSession> _activeSessions = [];
         private static readonly ConcurrentDictionary<long, GameSession> _pendingSessions = [];
 
+        private static int _sessionId = 0;
+        public static int SessionId { get { return _sessionId++; } }
+
         public static void SetActiveSession(long gameAccountId, GameSession? activeSession)
         {
             if (activeSession == null)

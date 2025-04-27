@@ -33,6 +33,7 @@ namespace Core.Packets
         protected void WriteFloat(float value) { _binaryWriter.Write(value); }
         protected void WriteDouble(double value) { _binaryWriter.Write(value); }
         protected void WriteBytes(byte[] value) { _binaryWriter.Write(value); }
+        protected void WriteBytes(ReadOnlySpan<byte> value) { _binaryWriter.Write(value); }
         protected void WriteString(string value)
         {
             WriteBytes(Encoding.UTF8.GetBytes(value));

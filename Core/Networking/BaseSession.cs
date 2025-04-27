@@ -18,7 +18,7 @@ namespace Core.Networking
         public void SendPacket(ServerPacket packet)
         {
             if (this is GameSession session)
-                Console.WriteLine($"[{GetType().Name}] Sending packet with opcode {(ServerOpcode)packet.Cmd}");
+                Console.WriteLine($"[{GetType().Name}] (Id: {session.SessionId}) Sending packet with opcode {(ServerOpcode)packet.Cmd}");
 
             Task.Run(() => SendPacketAsync(packet), _cancellationTokenSource.Token);
         }

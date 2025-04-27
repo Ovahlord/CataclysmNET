@@ -1,5 +1,4 @@
 ﻿using Core.Packets.Opcodes;
-using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Macs;
 using Org.BouncyCastle.Crypto.Parameters;
 using Packets.GamePackets.Substructures;
@@ -10,7 +9,7 @@ namespace Core.Packets.GamePackets
 {
     public sealed class ServerConnectTo : ServerPacket
     {
-        #region Binary Data
+        #region RSA Key Data
         private static readonly byte[] P =
         [
             0x7D, 0xBD, 0xB9, 0xE1, 0x2D, 0xAE, 0x42, 0x56, 0x6E, 0x2B, 0xE2, 0x89, 0xD9, 0xBB, 0x0C, 0x1F,
@@ -102,12 +101,6 @@ namespace Core.Packets.GamePackets
             0x21, 0x33
         ];
 
-        private static readonly BigInteger _p = new(P, true, true);
-        private static readonly BigInteger _q = new(Q, true, true);
-        private static readonly BigInteger _dmp1 = new(DP, true, true);
-        private static readonly BigInteger _dmq1 = new(DQ, true, true);
-        private static readonly BigInteger _iqmp = new(InverseQ, true, true);
-
         public ulong Key { get; set; }
         public uint Serial { get; set; }
         public required ConnectPayload Payload { get; set; }
@@ -132,16 +125,18 @@ namespace Core.Packets.GamePackets
             ushort port = (ushort)Payload.Where.Port;
             byte[] haiku = Encoding.ASCII.GetBytes(_haiku);
 
-            HMac hmac = new(new Sha1Digest());
+            var hmac = new HMac(new Org.BouncyCastle.Crypto.Digests.Sha1Digest());
             hmac.Init(new KeyParameter(WherePacketHmac));
 
+            // Update data with all inputs
             hmac.BlockUpdate(address, 0, address.Length);
-            hmac.BlockUpdate(BitConverter.GetBytes(addressType), 0, 4);
-            hmac.BlockUpdate(BitConverter.GetBytes(port), 0, 2);
+            hmac.BlockUpdate(BitConverter.GetBytes(addressType), 0, sizeof(int));
+            hmac.BlockUpdate(BitConverter.GetBytes(port), 0, sizeof(ushort));
             hmac.BlockUpdate(haiku, 0, 73);
             hmac.BlockUpdate(_piDigits, 0, _piDigits.Length);
             hmac.BlockUpdate([Payload.XorMagic], 0, 1);
 
+            // Finalize and get HMAC digest
             byte[] hmacResult = new byte[hmac.GetMacSize()];
             hmac.DoFinal(hmacResult, 0);
 
@@ -401,30 +396,40 @@ namespace Core.Packets.GamePackets
             WriteByte(_piDigits[35]);
             WriteByte(_piDigits[84]);
 
-            // Convert to BigInteger
-            BigInteger m = new(GetRawPacket(), true, true);
+            byte[] payloadBytes = GetRawPacket();
+            Clear(); // Reset the packet buffer so that we can write the actual packet content next
 
-            // Perform modular exponentiation
-            BigInteger m1 = BigInteger.ModPow(m % _p, _dmp1, _p);
-            BigInteger m2 = BigInteger.ModPow(m % _q, _dmq1, _q);
-            BigInteger h = (_iqmp * (m1 - m2)) % _p;
-
-            // Ensure a positive remainder
-            if (h.Sign < 0)
-                h += _p;
-
-            // Combine results
-            BigInteger result = m2 + h * _q;
-            byte[] resultBytes = new byte[256];
-            result.TryWriteBytes(resultBytes, out _, true, true);
-
+            byte[] encryptedPayload = EncryptWithCRT(payloadBytes);
             WriteUInt64(Key);
             WriteUInt32(Serial);
-            WriteBytes(resultBytes);
-            Console.WriteLine(BitConverter.ToString(resultBytes).Replace("-", ""));
+            WriteBytes(encryptedPayload);
             WriteByte(Con);
 
             return this;
+        }
+
+        private static byte[] EncryptWithCRT(byte[] payload)
+        {
+            BigInteger bnData = new(payload);
+            BigInteger p = new(P, isUnsigned: true);
+            BigInteger q = new(Q, isUnsigned: true);
+            BigInteger dp = new(DP, isUnsigned: true);
+            BigInteger dq = new(DQ, isUnsigned: true);
+            BigInteger iqmp = new(InverseQ, isUnsigned: true);
+
+            BigInteger m1 = BigInteger.ModPow(bnData % p, dp, p);
+            BigInteger m2 = BigInteger.ModPow(bnData % q, dq, q);
+            BigInteger h = (iqmp * (m1 - m2)) % p;
+
+            if (h.Sign < 0)
+                h += p;
+
+            BigInteger m = m2 + h * q;
+
+            byte[] encrypedPayload = new byte[256];
+            m.TryWriteBytes(encrypedPayload, out _);
+
+            return encrypedPayload;
         }
     }
 }
