@@ -1,0 +1,17 @@
+{
+  "Settings": {
+    "DatabaseType": "MySQL",
+    "LoginDatabase": {
+      "Host": "localhost",
+      "User": "root",
+      "Password": "root",
+      "Database": "login"
+    },
+    "RealmDatabase": {
+      "Host": "localhost",
+      "User": "root",
+      "Password": "root",
+      "Database": "realm"
+    }
+  }
+}

@@ -1,19 +1,28 @@
-﻿using Database.RealmDatabase.Tables;
+﻿using Database.Configuration;
+using Database.RealmDatabase.Tables;
 using Microsoft.EntityFrameworkCore;
 
 namespace Database.RealmDatabase
 {
     public sealed class RealmDatabaseContext : DbContext
     {
-        private readonly string _connectionString = "Server=localhost; User ID=root; Password=trinity; Database=realm";
-
         public DbSet<Realms> Realms { get; set; }
         public DbSet<Characters> Characters { get; set; }
         public DbSet<RealmCharacters> RealmCharacters { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseMySQL(_connectionString);
+            Settings settings = ConfigurationManager.Settings;
+
+            string host = settings.RealmDatabase.Host;
+            string user = settings.RealmDatabase.User;
+            string password = settings.RealmDatabase.Password;
+            string database = settings.RealmDatabase.Database;
+
+            if (settings.IsMySQL)
+                optionsBuilder.UseMySQL($"Server={host}; User ID={user}; Password={password}; Database={database}");
+            else if (settings.IsPostgreSQL)
+                optionsBuilder.UseNpgsql($"Host={host}; Username={user}; Password={password}; Database={database}");
         }
     }
 }

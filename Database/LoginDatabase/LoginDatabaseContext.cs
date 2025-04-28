@@ -1,17 +1,26 @@
-﻿using Database.LoginDatabase.Tables;
+﻿using Database.Configuration;
+using Database.LoginDatabase.Tables;
 using Microsoft.EntityFrameworkCore;
 
 namespace Database.LoginDatabase
 {
     public sealed class LoginDatabaseContext : DbContext
     {
-        private readonly string _connectionString = "Server=localhost; User ID=root; Password=trinity; Database=login";
-
         public DbSet<GameAccounts> GameAccounts { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseMySQL(_connectionString);
+            Settings settings = ConfigurationManager.Settings;
+
+            string host = settings.LoginDatabase.Host;
+            string user = settings.LoginDatabase.User;
+            string password = settings.LoginDatabase.Password;
+            string database = settings.LoginDatabase.Database;
+
+            if (settings.IsMySQL)
+                optionsBuilder.UseMySQL($"Server={host}; User ID={user}; Password={password}; Database={database}");
+            else if (settings.IsPostgreSQL)
+                optionsBuilder.UseNpgsql($"Host={host}; Username={user}; Password={password}; Database={database}");
         }
     }
 }
