@@ -1,19 +1,16 @@
-﻿using Packets;
-using Packets.GamePackets;
-using Shared.Enums;
-using System.Security.Cryptography;
-using System.Numerics;
-using System.Buffers.Binary;
+﻿using Core.Packets.GamePackets;
+using Core.Packets.GamePackets.Helpers;
+using Core.Packets.Opcodes;
 using Database.LoginDatabase;
 using Database.LoginDatabase.Tables;
 using Microsoft.EntityFrameworkCore;
-using Org.BouncyCastle.Crypto.Digests;
-using System.Text;
-using Core.Packets.Opcodes;
-using Org.BouncyCastle.Bcpg;
-using Core.Packets.GamePackets;
+using Packets.GamePackets;
+using Shared.Enums;
+using System.Buffers.Binary;
 using System.Net;
-using Core.Packets.GamePackets.Helpers;
+using System.Numerics;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Core.Networking
 {
@@ -94,15 +91,19 @@ namespace Core.Networking
                 uint t = 0;
                 byte[] accountBytes = Encoding.UTF8.GetBytes(authSession.Account);
 
-                Sha1Digest sha = new();
-                sha.BlockUpdate(accountBytes, 0, accountBytes.Length);
-                sha.BlockUpdate(BitConverter.GetBytes(t), 0, 4);
-                sha.BlockUpdate(BitConverter.GetBytes(authSession.LocalChallenge), 0, 4);
-                sha.BlockUpdate(_authSeed, 0, _authSeed.Length);
-                sha.BlockUpdate(_gameAccount.SessionKey, 0, _gameAccount.SessionKey.Length);
+                using SHA1 sha = SHA1.Create();
+                sha.TransformBlock(accountBytes, 0, accountBytes.Length, null, 0);
+                sha.TransformBlock(BitConverter.GetBytes(t), 0, 4, null, 0);
+                sha.TransformBlock(BitConverter.GetBytes(authSession.LocalChallenge), 0, 4, null, 0);
+                sha.TransformBlock(_authSeed, 0, _authSeed.Length, null, 0);
+                sha.TransformFinalBlock(_gameAccount.SessionKey, 0, _gameAccount.SessionKey.Length);
 
-                byte[] hash = new byte[sha.GetDigestSize()];
-                sha.DoFinal(hash, 0);
+                byte[]? hash = sha.Hash;
+                if (hash == null)
+                {
+                    SendAuthResponseError(ResponseCodes.AUTH_REJECT);
+                    return;
+                }
 
                 // Make sure that the auth seed of the server and client match
                 if (!hash.SequenceEqual(authSession.Digest))
@@ -146,16 +147,14 @@ namespace Core.Networking
 
                 byte[] login = Encoding.UTF8.GetBytes(_gameAccount.Login.ToUpper());
 
-                Sha1Digest sha = new();
-                sha.BlockUpdate(login, 0, login.Length);
-                sha.BlockUpdate(_gameAccount.SessionKey, 0, _gameAccount.SessionKey.Length);
-                sha.BlockUpdate(_authSeed, 0, _authSeed.Length);
+                using SHA1 sha = SHA1.Create();
+                sha.TransformBlock(login, 0, login.Length, null, 0);
+                sha.TransformBlock(_gameAccount.SessionKey, 0, _gameAccount.SessionKey.Length, null, 0);
+                sha.TransformFinalBlock(_authSeed, 0, _authSeed.Length);
 
-                byte[] hash = new byte[sha.GetDigestSize()];
-                sha.DoFinal(hash, 0);
-
+                byte[]? hash = sha.Hash;
                 // Make sure that the auth seed of the server and client match
-                if (!hash.SequenceEqual(clientAuthContinuedSession.Digest))
+                if (hash == null || !hash.SequenceEqual(clientAuthContinuedSession.Digest))
                 {
                     Console.WriteLine($"[{GetType().Name}] hash verification failed");
                     SendAuthResponseError(ResponseCodes.AUTH_FAILED);

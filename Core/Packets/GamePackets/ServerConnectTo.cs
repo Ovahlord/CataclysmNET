@@ -1,9 +1,7 @@
 ﻿using Core.Packets.Opcodes;
-using Org.BouncyCastle.Crypto.Macs;
-using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Crypto.Digests;
 using Packets.GamePackets.Substructures;
 using System.Numerics;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace Core.Packets.GamePackets
@@ -126,20 +124,17 @@ namespace Core.Packets.GamePackets
             ushort port = (ushort)Payload.Where.Port;
             byte[] haiku = Encoding.ASCII.GetBytes(_haiku);
 
-            var hmac = new HMac(new Sha1Digest());
-            hmac.Init(new KeyParameter(WherePacketHmac));
+            using HMACSHA1 hmac = new(WherePacketHmac);
+            hmac.TransformBlock(address, 0, address.Length, null, 0);
+            hmac.TransformBlock(BitConverter.GetBytes(addressType), 0, sizeof(int), null, 0);
+            hmac.TransformBlock(BitConverter.GetBytes(port), 0, sizeof(ushort), null, 0);
+            hmac.TransformBlock(haiku, 0, 73, null, 0);
+            hmac.TransformBlock(_piDigits, 0, _piDigits.Length, null, 0);
+            hmac.TransformFinalBlock([Payload.XorMagic], 0, 1);
 
-            // Update data with all inputs
-            hmac.BlockUpdate(address, 0, address.Length);
-            hmac.BlockUpdate(BitConverter.GetBytes(addressType), 0, sizeof(int));
-            hmac.BlockUpdate(BitConverter.GetBytes(port), 0, sizeof(ushort));
-            hmac.BlockUpdate(haiku, 0, 73);
-            hmac.BlockUpdate(_piDigits, 0, _piDigits.Length);
-            hmac.BlockUpdate([Payload.XorMagic], 0, 1);
-
-            // Finalize and get HMAC digest
-            byte[] hmacResult = new byte[hmac.GetMacSize()];
-            hmac.DoFinal(hmacResult, 0);
+            byte[]? hmacResult = hmac.Hash;
+            if (hmacResult == null)
+                return this;
 
             WriteByte(_piDigits[30]);
             WriteByte(haiku[31]);
