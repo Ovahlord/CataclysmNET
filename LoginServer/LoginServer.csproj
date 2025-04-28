@@ -9,7 +9,12 @@
 
   <PropertyGroup>
     <BaseOutputPath>..\bin\</BaseOutputPath>
+    <ApplicationIcon>loginserver.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="loginserver.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj" />

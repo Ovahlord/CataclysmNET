@@ -9,6 +9,11 @@
 
   <PropertyGroup>
     <BaseOutputPath>..\bin\</BaseOutputPath>
+    <ApplicationIcon>worldserver.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="worldserver.ico" />
+  </ItemGroup>
 
 </Project>

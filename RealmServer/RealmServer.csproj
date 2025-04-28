@@ -10,11 +10,16 @@
 
   <PropertyGroup>
     <BaseOutputPath>..\bin\</BaseOutputPath>
+    <ApplicationIcon>realmserver.ico</ApplicationIcon>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <Optimize>False</Optimize>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="realmserver.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj" />
