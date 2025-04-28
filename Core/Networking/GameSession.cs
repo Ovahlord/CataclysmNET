@@ -23,7 +23,7 @@ namespace Core.Networking
         private readonly BigInteger _encryptSeed = new(RandomNumberGenerator.GetBytes(16), true);
         private readonly BigInteger _decryptSeed = new(RandomNumberGenerator.GetBytes(16), true);
         private readonly byte[] _authSeed = RandomNumberGenerator.GetBytes(4);
-        private GameAccounts? _gameAccount = null;
+        protected GameAccounts? _gameAccount = null;
 
         public int SessionId { get; private set; } = GameSessionManager.SessionId;
 

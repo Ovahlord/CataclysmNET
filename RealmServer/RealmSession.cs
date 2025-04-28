@@ -1,6 +1,9 @@
 ﻿using Core.Networking;
 using Core.Packets.GamePackets;
 using Core.Packets.Opcodes;
+using Database.RealmDatabase;
+using Database.RealmDatabase.Tables;
+using Packets.GamePackets.Substructures;
 
 namespace RealmServer
 {
@@ -22,10 +25,47 @@ namespace RealmServer
 
         private void HandleEnumCharacters(ClientEnumCharacters enumCharacters)
         {
-            ServerEnumCharactersResult packet = new()
+            ServerEnumCharactersResult packet = new();
+
+            if (_gameAccount == null)
             {
-                Success = true
-            };
+                packet.Success = false;
+                SendPacket(packet);
+                return;
+            }
+
+            using RealmDatabaseContext realmDatabase = new();
+            IEnumerable<RealmCharacters> realmCharacters = realmDatabase.RealmCharacters.Where(rc => rc.GameAccountId == _gameAccount.Id);
+            if (!realmCharacters.Any())
+            {
+                packet.Success = false;
+                SendPacket(packet);
+                return;
+            }
+
+            IEnumerable<Characters> characters = realmDatabase.Characters.Where(c => realmCharacters.Select(rc => rc.CharacterId).Contains(c.Id));
+            byte listPosition = 0;
+            foreach (Characters character in characters)
+            {
+                packet.Characters.Add(new CharacterListEntry()
+                {
+                     Name = character.Name,
+                     Guid = (ulong)character.Id,
+                     MapID = 0,
+                     ClassID = character.ClassId,
+                     FaceID = character.FaceId,
+                     FacialHair = character.FacialHairStyleId,
+                     HairColor = character.HairColorId,
+                     HairStyle = character.HairStyleId,
+                     ListPosition = listPosition,
+                     RaceID = character.RaceId,
+                     SexID = character.SexId,
+                     SkinID = character.SkinId,
+                });
+
+                ++listPosition;
+            }
+
             SendPacket(packet);
         }
 
