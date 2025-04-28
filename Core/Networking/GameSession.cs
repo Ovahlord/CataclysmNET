@@ -44,6 +44,7 @@ namespace Core.Networking
                 case ClientOpcode.CMSG_AUTH_SESSION:            HandleAuthSession(payload); break;
                 case ClientOpcode.CMSG_AUTH_CONTINUED_SESSION:  HandleAuthContinuedSession(payload); break;
                 case ClientOpcode.CMSG_SUSPEND_COMMS_ACK:       HandleClientSuspendCommsAck(payload); break;
+                case ClientOpcode.CMSG_PING:                    HandleClientPing(payload); break;
                 default:
                     break;
             }
@@ -175,6 +176,11 @@ namespace Core.Networking
 
             Console.WriteLine($"ClientSuspendCommsAck Serial: {clientSuspendCommsAck.Serial}");
             GameSessionManager.FinalizeSessionJump(_gameAccount.Id);
+        }
+
+        private void HandleClientPing(ClientPing clientPing)
+        {
+            SendPacket(new ServerPong(clientPing.Serial));
         }
 
         #endregion

@@ -120,8 +120,6 @@ namespace Core.Networking
             Buffer.BlockCopy(header, 0, packetData, 0, header.Length);
             Buffer.BlockCopy(payload, 0, packetData, header.Length, payload.Length);
 
-            Console.WriteLine($"[{GetType().Name}] sending {packetData.Length} bytes of data");
-
             await WriteDataToStreamAsync(packetData, cancellation);
         }
 
