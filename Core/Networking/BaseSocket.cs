@@ -88,7 +88,14 @@ namespace Core.Networking
 
         public virtual async Task SendPacketAsync(ServerPacket packet, CancellationToken cancellationToken = default)
         {
-            await WriteDataToStreamAsync(packet.Write().GetRawPacket(), cancellationToken);
+            try
+            {
+                await WriteDataToStreamAsync(packet.Write().GetRawPacket(), cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
         }
 
         public abstract BaseSession CreateSession();

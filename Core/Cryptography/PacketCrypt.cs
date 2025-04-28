@@ -6,21 +6,26 @@ namespace Core.Cryptography
 {
     public class PacketCrypt
     {
+        private static readonly byte[] authSessionEncryptionKey = [0xCC, 0x98, 0xAE, 0x04, 0xE8, 0x97, 0xEA, 0xCA, 0x12, 0xDD, 0xC0, 0x93, 0x42, 0x91, 0x53, 0x57];
+        private static readonly byte[] authSessionDecryptionKey = [0xC2, 0xB3, 0x72, 0x3C, 0xC6, 0xAE, 0xD9, 0xB5, 0x34, 0x3C, 0x53, 0xEE, 0x2F, 0x43, 0x67, 0xCE];
+
         public PacketCrypt(byte[] sessionKey)
         {
-            Init(sessionKey);
+            Init(sessionKey, authSessionEncryptionKey, authSessionDecryptionKey);
+        }
+
+        public PacketCrypt(byte[] sessionKey, byte[] encryptionKey, byte[] decryptionKey)
+        {
+            Init(sessionKey, encryptionKey, decryptionKey);
         }
 
         private readonly ARC4 _clientDecrypt = new();
         private readonly ARC4 _serverEncrypt = new();
 
-        private void Init(byte[] K)
+        private void Init(byte[] K, byte[] encryptionKey, byte[] decryptionKey)
         {
-            byte[] serverEncryptionKey = [0xCC, 0x98, 0xAE, 0x04, 0xE8, 0x97, 0xEA, 0xCA, 0x12, 0xDD, 0xC0, 0x93, 0x42, 0x91, 0x53, 0x57];
-            byte[] serverDecryptionKey = [0xC2, 0xB3, 0x72, 0x3C, 0xC6, 0xAE, 0xD9, 0xB5, 0x34, 0x3C, 0x53, 0xEE, 0x2F, 0x43, 0x67, 0xCE];
-
-            _serverEncrypt.Init(GetHMACSHA1Digest(serverEncryptionKey, K));
-            _clientDecrypt.Init(GetHMACSHA1Digest(serverDecryptionKey, K));
+            _serverEncrypt.Init(GetHMACSHA1Digest(encryptionKey, K));
+            _clientDecrypt.Init(GetHMACSHA1Digest(decryptionKey, K));
 
             // Drop first 1024 bytes, as WoW uses ARC4-drop1024.
             byte[] syncBuf = new byte[1024];

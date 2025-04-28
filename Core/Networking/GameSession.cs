@@ -137,13 +137,12 @@ namespace Core.Networking
                 _gameAccount = await loginDatabase.GameAccounts.FirstOrDefaultAsync(ga => ga.Id == connectToKey.AccountId);
                 if (_gameAccount == null)
                 {
-                    SendAuthResponseError(ResponseCodes.AUTH_UNKNOWN_ACCOUNT);
-                    // Close();
+                    Close();
                     return;
                 }
 
                 if (Socket is GameSocket socket)
-                    socket.InitializePacketCrypt(_gameAccount.SessionKey);
+                    socket.InitializePacketCrypt(_gameAccount.SessionKey, _encryptSeed.ToByteArray(true), _decryptSeed.ToByteArray(true));
 
                 byte[] login = Encoding.UTF8.GetBytes(_gameAccount.Login.ToUpper());
 
@@ -236,19 +235,21 @@ namespace Core.Networking
             if (_gameAccount == null)
                 return;
 
+            ConnectToKey key = new()
+            {
+                AccountId = (uint)_gameAccount.Id,
+                ConnectionType = 0,
+                Key = (uint)RandomNumberGenerator.GetInt32(0x7FFFFFFF)
+            };
+
             ServerConnectTo packet = new()
             {
                 Serial = 14,
                 Payload = new()
                 {
-                    Where = IPEndPoint.Parse("127.0.0.1:8085")
+                    Where = IPEndPoint.Parse("127.0.0.1:140")
                 },
-                Key = new ConnectToKey()
-                {
-                    AccountId = (uint)_gameAccount.Id,
-                    ConnectionType = 0,
-                    Key = BinaryPrimitives.ReadUInt32LittleEndian(RandomNumberGenerator.GetBytes(4))
-                }.Raw
+                Key = key.Raw
             };
 
             SendPacket(packet);

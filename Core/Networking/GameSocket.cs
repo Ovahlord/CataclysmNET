@@ -120,6 +120,8 @@ namespace Core.Networking
             Buffer.BlockCopy(header, 0, packetData, 0, header.Length);
             Buffer.BlockCopy(payload, 0, packetData, header.Length, payload.Length);
 
+            Console.WriteLine($"[{GetType().Name}] sending {packetData.Length} bytes of data");
+
             await WriteDataToStreamAsync(packetData, cancellation);
         }
 
@@ -136,6 +138,11 @@ namespace Core.Networking
         public void InitializePacketCrypt(byte[] sessionKey)
         {
             _packetCrypt = new(sessionKey);
+        }
+
+        public void InitializePacketCrypt(byte[] sessionKey, byte[] encryptionKey, byte[] decryptionKey)
+        {
+            _packetCrypt = new(sessionKey, encryptionKey, decryptionKey);
         }
 
         private bool ReadConnectionInitialize(ClientConnectionInitialize connectionInitialize)

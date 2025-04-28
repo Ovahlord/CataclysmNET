@@ -1,6 +1,7 @@
 ﻿using Core.Packets.Opcodes;
 using Org.BouncyCastle.Crypto.Macs;
 using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Crypto.Digests;
 using Packets.GamePackets.Substructures;
 using System.Numerics;
 using System.Text;
@@ -125,7 +126,7 @@ namespace Core.Packets.GamePackets
             ushort port = (ushort)Payload.Where.Port;
             byte[] haiku = Encoding.ASCII.GetBytes(_haiku);
 
-            var hmac = new HMac(new Org.BouncyCastle.Crypto.Digests.Sha1Digest());
+            var hmac = new HMac(new Sha1Digest());
             hmac.Init(new KeyParameter(WherePacketHmac));
 
             // Update data with all inputs
