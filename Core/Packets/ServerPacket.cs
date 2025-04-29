@@ -104,6 +104,12 @@ namespace Core.Packets
             }
         }
 
+        public void WriteByteSeq(byte b)
+        {
+            if (b != 0)
+                WriteByte((byte)(b ^ 1));
+        }
+
         public abstract ServerPacket Write();
 
         /// <summary>

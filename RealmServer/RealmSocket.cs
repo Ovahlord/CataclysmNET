@@ -1,5 +1,6 @@
 ﻿using System.Net.Sockets;
 using Core.Networking;
+using Game.Networking;
 
 namespace RealmServer
 {

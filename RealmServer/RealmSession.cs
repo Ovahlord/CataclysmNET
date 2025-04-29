@@ -1,9 +1,10 @@
 ﻿using Core.Networking;
-using Core.Packets.GamePackets;
 using Core.Packets.Opcodes;
 using Database.RealmDatabase;
 using Database.RealmDatabase.Tables;
-using Packets.GamePackets.Substructures;
+using Game.Networking;
+using Game.Packets;
+using Game.Packets.Substructures;
 
 namespace RealmServer
 {
@@ -36,12 +37,15 @@ namespace RealmServer
 
             using RealmDatabaseContext realmDatabase = new();
             IEnumerable<RealmCharacters> realmCharacters = realmDatabase.RealmCharacters.Where(rc => rc.GameAccountId == _gameAccount.Id);
+            // No characters have been found
             if (!realmCharacters.Any())
             {
-                packet.Success = false;
+                packet.Success = true;
                 SendPacket(packet);
                 return;
             }
+
+            packet.Success = true;
 
             IEnumerable<Characters> characters = realmDatabase.Characters.Where(c => realmCharacters.Select(rc => rc.CharacterId).Contains(c.Id));
             byte listPosition = 0;
