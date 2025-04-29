@@ -2,7 +2,7 @@
 
 namespace Database.RealmDatabase.Tables
 {
-    [PrimaryKey(nameof(RealmId), nameof(CharacterId))]
+    [PrimaryKey(nameof(RealmId), nameof(GameAccountId), nameof(CharacterId))]
     public sealed class RealmCharacters
     {
         public int RealmId { get; set; }

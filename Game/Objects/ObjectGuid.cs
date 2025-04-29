@@ -186,7 +186,6 @@ namespace Game.Objects
                     return true;
             }
         }
-
     }
 
     public class PackedGuid

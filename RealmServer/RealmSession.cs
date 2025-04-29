@@ -1,8 +1,10 @@
-﻿using Core.Networking;
+﻿using Core.Enums;
+using Core.Networking;
 using Core.Packets.Opcodes;
 using Database.RealmDatabase;
 using Database.RealmDatabase.Tables;
 using Game.Networking;
+using Game.Objects;
 using Game.Packets;
 using Game.Packets.Substructures;
 
@@ -51,10 +53,13 @@ namespace RealmServer
             byte listPosition = 0;
             foreach (Characters character in characters)
             {
+                CharacterListItem[] inventoryItems = new CharacterListItem[23];
+                Array.Fill(inventoryItems, new CharacterListItem());
+
                 packet.Characters.Add(new CharacterListEntry()
                 {
                      Name = character.Name,
-                     Guid = (ulong)character.Id,
+                     Guid = new ObjectGuid(HighGuid.Player, 0, (uint)character.Id),
                      MapID = 0,
                      ClassID = character.ClassId,
                      FaceID = character.FaceId,
@@ -65,6 +70,7 @@ namespace RealmServer
                      RaceID = character.RaceId,
                      SexID = character.SexId,
                      SkinID = character.SkinId,
+                     InventoryItems = inventoryItems
                 });
 
                 ++listPosition;
@@ -75,7 +81,50 @@ namespace RealmServer
 
         private void HandleCreateCharacter(ClientCreateCharacter createCharacter)
         {
+            if (_gameAccount == null)
+                return;
 
+            Characters newCharacter = new()
+            {
+                Name = createCharacter.Name,
+                RaceId = createCharacter.RaceID,
+                ClassId = createCharacter.ClassID,
+                SexId = createCharacter.SexID,
+                SkinId = createCharacter.SkinID,
+                FaceId = createCharacter.FaceID,
+                HairStyleId = createCharacter.HairStyleID,
+                HairColorId = createCharacter.HairColorID,
+                FacialHairStyleId = createCharacter.FacialHairStyleID,
+                OutfitId = createCharacter.OutfitID
+            };
+
+            Console.WriteLine($"{newCharacter.Id}");
+
+            Task.Run(async () =>
+            {
+                using RealmDatabaseContext realmDatabase = new();
+                realmDatabase.Characters.Add(newCharacter);
+                await realmDatabase.SaveChangesAsync();
+
+                Console.WriteLine($"{newCharacter.Id}");
+
+                RealmCharacters realmCharacter = new()
+                {
+                    RealmId = 1,
+                    GameAccountId = _gameAccount.Id,
+                    CharacterId = newCharacter.Id
+                };
+
+                realmDatabase.RealmCharacters.Add(realmCharacter);
+                await realmDatabase.SaveChangesAsync();
+
+                ServerCreateChar packet = new()
+                {
+                    Code = ResponseCodes.CHAR_CREATE_SUCCESS
+                };
+
+                SendPacket(packet);
+            });
         }
 
         #endregion

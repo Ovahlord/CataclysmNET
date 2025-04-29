@@ -1,4 +1,5 @@
-﻿using Core.Networking;
+﻿using Core.Enums;
+using Core.Networking;
 using Core.Packets.Opcodes;
 using Database.LoginDatabase;
 using Database.LoginDatabase.Tables;

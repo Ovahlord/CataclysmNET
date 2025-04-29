@@ -1,7 +1,10 @@
-﻿namespace Database.RealmDatabase.Tables
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Database.RealmDatabase.Tables
 {
     public sealed class Characters
     {
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public byte RaceId { get; set; }

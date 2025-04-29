@@ -1,4 +1,4 @@
-﻿namespace Shared.Enums
+﻿namespace Core.Enums
 {
     public enum ResponseCodes
     {
