@@ -9,10 +9,12 @@ namespace Game.Packets
             return new ClientPing(buffer);
         }
 
+        public uint Latency { get; private set; }
         public uint Serial { get; private set; }
 
         protected override void Read()
         {
+            Latency = ReadUInt32();
             Serial = ReadUInt32();
         }
     }
