@@ -1,7 +1,8 @@
-﻿using System.ComponentModel;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace Database.RealmDatabase.Tables
 {
+    [PrimaryKey(nameof(CharacterId))]
     public sealed class CharacterStats
     {
         public int CharacterId { get; set; }
