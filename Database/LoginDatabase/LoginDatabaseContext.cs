@@ -13,14 +13,15 @@ namespace Database.LoginDatabase
             Settings settings = ConfigurationManager.Settings;
 
             string host = settings.LoginDatabase.Host;
+            string port = settings.LoginDatabase.Port;
             string user = settings.LoginDatabase.User;
             string password = settings.LoginDatabase.Password;
             string database = settings.LoginDatabase.Database;
 
             if (settings.IsMySQL)
-                optionsBuilder.UseMySQL($"Server={host}; User ID={user}; Password={password}; Database={database}");
+                optionsBuilder.UseMySQL($"Server={host}; Port={port}; User ID={user}; Password={password}; Database={database}");
             else if (settings.IsPostgreSQL)
-                optionsBuilder.UseNpgsql($"Host={host}; Username={user}; Password={password}; Database={database}");
+                optionsBuilder.UseNpgsql($"Host={host}; Port={port}; Username={user}; Password={password}; Database={database}");
         }
     }
 }
