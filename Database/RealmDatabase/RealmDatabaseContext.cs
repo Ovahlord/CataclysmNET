@@ -8,6 +8,7 @@ namespace Database.RealmDatabase
     {
         public DbSet<Realms> Realms { get; set; }
         public DbSet<Characters> Characters { get; set; }
+        public DbSet<CharacterStats> CharacterStats { get; set; }
         public DbSet<RealmCharacters> RealmCharacters { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

@@ -3,7 +3,6 @@ using Database.LoginDatabase.Tables;
 using Database.RealmDatabase.Tables;
 using LoginServer.Enums;
 using Microsoft.EntityFrameworkCore;
-using Packets;
 using Packets.LoginPackets;
 using Shared.Enums;
 using System.Text;
@@ -196,7 +195,7 @@ namespace LoginServer.Networking
                     Flags = (RealmFlags)realm.Flags,
                     RealmType = realm.RealmType,
                     TimeZone = realm.TimeZone,
-                    RealmServerAddress = realm.Address
+                    RealmServerAddress = realm.FirstSocketAddress
                 });
             }
 

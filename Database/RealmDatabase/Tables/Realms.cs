@@ -4,7 +4,8 @@
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
-        public string Address { get; set; } = string.Empty;
+        public string FirstSocketAddress { get; set; } = string.Empty;
+        public string SecondSocketAddress { get; set; } = string.Empty;
         public byte RealmType { get; set; }
         public byte TimeZone { get; set; }
         public byte Flags { get; set; }

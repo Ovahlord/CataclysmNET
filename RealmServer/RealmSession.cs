@@ -98,6 +98,12 @@ namespace RealmServer
                 OutfitId = createCharacter.OutfitID
             };
 
+            CharacterStats characterStats = new()
+            {
+                ExperienceLevel = 1,
+                CreationDate = DateTime.UtcNow
+            };
+
             Console.WriteLine($"{newCharacter.Id}");
 
             Task.Run(async () =>
@@ -106,7 +112,8 @@ namespace RealmServer
                 realmDatabase.Characters.Add(newCharacter);
                 await realmDatabase.SaveChangesAsync();
 
-                Console.WriteLine($"{newCharacter.Id}");
+                realmDatabase.CharacterStats.Add(characterStats);
+                await realmDatabase.SaveChangesAsync();
 
                 RealmCharacters realmCharacter = new()
                 {

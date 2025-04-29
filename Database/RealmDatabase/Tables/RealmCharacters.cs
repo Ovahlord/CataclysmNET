@@ -8,5 +8,6 @@ namespace Database.RealmDatabase.Tables
         public int RealmId { get; set; }
         public int GameAccountId { get; set; }
         public int CharacterId { get; set; }
+        public byte ListPosition { get; set; }
     }
 }
