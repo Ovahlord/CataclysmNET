@@ -1,4 +1,5 @@
-﻿using Database.LoginDatabase;
+﻿using Core.Misc;
+using Database.LoginDatabase;
 using Database.RealmDatabase;
 using LoginServer.Networking;
 using System.Net;
@@ -10,6 +11,7 @@ namespace LoginServer
     {
         static void Main(string[] args)
         {
+            Console.WriteLine(Banner.BannerString);
             Console.WriteLine("===================================");
             Console.WriteLine("          LOGINSERVER              ");
             Console.WriteLine("===================================");

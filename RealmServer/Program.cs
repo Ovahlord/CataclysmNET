@@ -1,5 +1,6 @@
 ﻿using System.Net.Sockets;
 using System.Net;
+using Core.Misc;
 
 namespace RealmServer
 {
@@ -7,6 +8,7 @@ namespace RealmServer
     {
         static void Main(string[] args)
         {
+            Console.WriteLine(Banner.BannerString);
             Console.WriteLine("===================================");
             Console.WriteLine("          REALMSERVER              ");
             Console.WriteLine("===================================");
