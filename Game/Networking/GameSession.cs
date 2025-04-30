@@ -25,12 +25,11 @@ namespace Game.Networking
         private readonly BigInteger _decryptSeed = new(RandomNumberGenerator.GetBytes(16), true);
         private readonly byte[] _authSeed = RandomNumberGenerator.GetBytes(4);
         protected GameAccounts? _gameAccount = null;
-
-        public int SessionId { get; private set; } = GameSessionManager.SessionId;
+        protected int _sessionIndex = 0;
 
         public override void HandlePacket(int opcode, byte[] payload)
         {
-            Console.WriteLine($"[{GetType().Name}] (Id: {SessionId}) Called packet handler for opcode: {(ClientOpcode)opcode} (Size: {payload.Length})");
+            Console.WriteLine($"[{GetType().Name}] Called packet handler for opcode: {(ClientOpcode)opcode} (Size: {payload.Length})");
             CallPacketHandler((ClientOpcode)opcode, payload);
         }
 
@@ -42,10 +41,10 @@ namespace Game.Networking
             switch (opcode)
             {
                 case ClientOpcode.CMSG_LOG_DISCONNECT:          HandleLogDisconnect(payload); break;
-                case ClientOpcode.CMSG_AUTH_SESSION:            HandleAuthSession(payload); break;
-                case ClientOpcode.CMSG_AUTH_CONTINUED_SESSION:  HandleAuthContinuedSession(payload); break;
+                case ClientOpcode.CMSG_AUTH_SESSION:            _ = HandleAuthSession(payload); break;
+                case ClientOpcode.CMSG_AUTH_CONTINUED_SESSION:  _ = HandleAuthContinuedSession(payload); break;
                 case ClientOpcode.CMSG_SUSPEND_COMMS_ACK:       HandleClientSuspendCommsAck(payload); break;
-                case ClientOpcode.CMSG_PING:                    HandleClientPing(payload); break;
+                case ClientOpcode.CMSG_PING:                    _ = HandleClientPing(payload); break;
                 default:
                     break;
             }
@@ -55,9 +54,6 @@ namespace Game.Networking
         {
             if (_cancellationTokenSource.IsCancellationRequested)
                 return;
-
-            if (_gameAccount != null)
-                GameSessionManager.SetActiveSession(_gameAccount.Id, null);
 
             base.Close();
         }
@@ -69,105 +65,103 @@ namespace Game.Networking
             Console.WriteLine($"[{GetType().Name}] Client disconnected for reason: {(LogDisconnectReason)logDisconnect.Reason}");
         }
 
-        private void HandleAuthSession(ClientAuthSession authSession)
+        private async Task HandleAuthSession(ClientAuthSession authSession)
         {
-            Task.Run(async () =>
+            using LoginDatabaseContext loginDatabase = new();
+            _gameAccount = await loginDatabase.GameAccounts.FirstOrDefaultAsync(ga => ga.Login == authSession.Account);
+
+            // Hacking attempt - no account exists
+            if (_gameAccount == null)
             {
-                using LoginDatabaseContext loginDatabase = new();
-                _gameAccount = await loginDatabase.GameAccounts.FirstOrDefaultAsync(ga => ga.Login == authSession.Account);
+                SendAuthResponseError(ResponseCodes.AUTH_UNKNOWN_ACCOUNT);
+                //Close();
+                return;
+            }
 
-                // Hacking attempt - no account exists
-                if (_gameAccount == null)
-                {
-                    SendAuthResponseError(ResponseCodes.AUTH_UNKNOWN_ACCOUNT);
-                    //Close();
-                    return;
-                }
+            GameSessionManager.SetActiveSession(_gameAccount.Id, this);
 
-                GameSessionManager.SetActiveSession(_gameAccount.Id, this);
+            if (Socket is GameSocket socket)
+                socket.InitializePacketCrypt(_gameAccount.SessionKey);
 
-                if (Socket is GameSocket socket)
-                    socket.InitializePacketCrypt(_gameAccount.SessionKey);
+            // Check that Key and account name are the same on client and server
+            uint t = 0;
+            byte[] accountBytes = Encoding.UTF8.GetBytes(authSession.Account);
 
-                // Check that Key and account name are the same on client and server
-                uint t = 0;
-                byte[] accountBytes = Encoding.UTF8.GetBytes(authSession.Account);
+            using SHA1 sha = SHA1.Create();
+            sha.TransformBlock(accountBytes, 0, accountBytes.Length, null, 0);
+            sha.TransformBlock(BitConverter.GetBytes(t), 0, 4, null, 0);
+            sha.TransformBlock(BitConverter.GetBytes(authSession.LocalChallenge), 0, 4, null, 0);
+            sha.TransformBlock(_authSeed, 0, _authSeed.Length, null, 0);
+            sha.TransformFinalBlock(_gameAccount.SessionKey, 0, _gameAccount.SessionKey.Length);
 
-                using SHA1 sha = SHA1.Create();
-                sha.TransformBlock(accountBytes, 0, accountBytes.Length, null, 0);
-                sha.TransformBlock(BitConverter.GetBytes(t), 0, 4, null, 0);
-                sha.TransformBlock(BitConverter.GetBytes(authSession.LocalChallenge), 0, 4, null, 0);
-                sha.TransformBlock(_authSeed, 0, _authSeed.Length, null, 0);
-                sha.TransformFinalBlock(_gameAccount.SessionKey, 0, _gameAccount.SessionKey.Length);
+            byte[]? hash = sha.Hash;
+            if (hash == null)
+            {
+                SendAuthResponseError(ResponseCodes.AUTH_REJECT);
+                return;
+            }
 
-                byte[]? hash = sha.Hash;
-                if (hash == null)
-                {
-                    SendAuthResponseError(ResponseCodes.AUTH_REJECT);
-                    return;
-                }
+            // Make sure that the auth seed of the server and client match
+            if (!hash.SequenceEqual(authSession.Digest))
+            {
+                Console.WriteLine($"[{GetType().Name}] hash verification failed");
+                SendAuthResponseError(ResponseCodes.AUTH_FAILED);
+                //Close();
+                return;
+            }
 
-                // Make sure that the auth seed of the server and client match
-                if (!hash.SequenceEqual(authSession.Digest))
-                {
-                    Console.WriteLine($"[{GetType().Name}] hash verification failed");
-                    SendAuthResponseError(ResponseCodes.AUTH_FAILED);
-                    //Close();
-                    return;
-                }
+            Console.WriteLine($"[{GetType().Name}] HandleAuthSession successfully authenticated");
 
-                Console.WriteLine($"[{GetType().Name}] HandleAuthSession successfully authenticated");
+            // All checks have passed. Send the response and await new packets
+            SendAuthResponseSuccess();
 
-                // All checks have passed. Send the response and await new packets
-                SendAuthResponseSuccess();
-
-                // And finally have the client connect to the actual active socket while this one serves as fallback
-                SendConnectTo();
-
-            }, _cancellationTokenSource.Token);
+            // And finally have the client connect to the actual active socket while this one serves as fallback
+            SendConnectTo();
         }
 
-        private void HandleAuthContinuedSession(ClientAuthContinuedSession clientAuthContinuedSession)
+        private async Task HandleAuthContinuedSession(ClientAuthContinuedSession clientAuthContinuedSession)
         {
-            ConnectToKey connectToKey = new()
+            ConnectToKey connectToKey = new(clientAuthContinuedSession.Key);
+
+            // Try to retrieve the game account of the user from the key
+            using LoginDatabaseContext loginDatabase = new();
+            _gameAccount = await loginDatabase.GameAccounts.FirstOrDefaultAsync(ga => ga.Id == connectToKey.AccountId);
+            if (_gameAccount == null)
             {
-                Raw = clientAuthContinuedSession.Key
-            };
+                Close();
+                return;
+            }
 
-            Task.Run(async () =>
+            _sessionIndex = 1;
+
+            // Mark our current session as target session as we prepare to transition over to it
+            GameSessionManager.SetTargetSession(_gameAccount.Id, this);
+
+            // Initialize packet header encryption
+            if (Socket is GameSocket socket)
+                socket.InitializePacketCrypt(_gameAccount.SessionKey, _encryptSeed.ToByteArray(true), _decryptSeed.ToByteArray(true));
+
+            // Validate the hash that we have received from the client
+            byte[] login = Encoding.UTF8.GetBytes(_gameAccount.Login.ToUpper());
+
+            using SHA1 sha = SHA1.Create();
+            sha.TransformBlock(login, 0, login.Length, null, 0);
+            sha.TransformBlock(_gameAccount.SessionKey, 0, _gameAccount.SessionKey.Length, null, 0);
+            sha.TransformFinalBlock(_authSeed, 0, _authSeed.Length);
+
+            byte[]? hash = sha.Hash;
+            if (hash == null || !hash.SequenceEqual(clientAuthContinuedSession.Digest))
             {
-                using LoginDatabaseContext loginDatabase = new();
-                _gameAccount = await loginDatabase.GameAccounts.FirstOrDefaultAsync(ga => ga.Id == connectToKey.AccountId);
-                if (_gameAccount == null)
-                {
-                    Close();
-                    return;
-                }
+                Console.WriteLine($"[{GetType().Name}] hash verification failed");
+                SendAuthResponseError(ResponseCodes.AUTH_FAILED);
+                //Close();
+                return;
+            }
 
-                if (Socket is GameSocket socket)
-                    socket.InitializePacketCrypt(_gameAccount.SessionKey, _encryptSeed.ToByteArray(true), _decryptSeed.ToByteArray(true));
+            Console.WriteLine($"[{GetType().Name}] HandleAuthContinuedSession successfully authenticated");
 
-                byte[] login = Encoding.UTF8.GetBytes(_gameAccount.Login.ToUpper());
-
-                using SHA1 sha = SHA1.Create();
-                sha.TransformBlock(login, 0, login.Length, null, 0);
-                sha.TransformBlock(_gameAccount.SessionKey, 0, _gameAccount.SessionKey.Length, null, 0);
-                sha.TransformFinalBlock(_authSeed, 0, _authSeed.Length);
-
-                byte[]? hash = sha.Hash;
-                // Make sure that the auth seed of the server and client match
-                if (hash == null || !hash.SequenceEqual(clientAuthContinuedSession.Digest))
-                {
-                    Console.WriteLine($"[{GetType().Name}] hash verification failed");
-                    SendAuthResponseError(ResponseCodes.AUTH_FAILED);
-                    //Close();
-                    return;
-                }
-
-                Console.WriteLine($"[{GetType().Name}] HandleAuthContinuedSession successfully authenticated");
-
-                GameSessionManager.InitiateSessionJump(_gameAccount.Id, this);
-            });
+            // We have passed the authentication, inform the currently active session to drop its communication
+            GameSessionManager.GetActiveSession(_gameAccount.Id)?.SendSuspendComms();
         }
 
         private void HandleClientSuspendCommsAck(ClientSuspendCommsAck clientSuspendCommsAck)
@@ -176,12 +170,18 @@ namespace Game.Networking
                 return;
 
             Console.WriteLine($"ClientSuspendCommsAck Serial: {clientSuspendCommsAck.Serial}");
-            GameSessionManager.FinalizeSessionJump(_gameAccount.Id);
+
+            GameSession? targetSession = GameSessionManager.GetTargetSession(_gameAccount.Id);
+            if (targetSession == null)
+                return;
+
+            GameSessionManager.SetActiveSession(_gameAccount.Id, targetSession);
+            targetSession.SendResumeComms();
         }
 
-        private void HandleClientPing(ClientPing clientPing)
+        private async Task HandleClientPing(ClientPing clientPing)
         {
-            SendPacket(new ServerPong(clientPing.Serial));
+            await SendPacketAsync(new ServerPong(clientPing.Serial));
         }
 
         #endregion

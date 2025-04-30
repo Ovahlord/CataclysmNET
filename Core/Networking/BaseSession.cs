@@ -10,14 +10,15 @@ namespace Core.Networking
 
         public abstract void HandlePacket(int opcode, byte[] payload);
 
-        public async Task SendPacketAsync(ServerPacket packet, CancellationToken cancellationToken = default)
+        public async Task SendPacketAsync(ServerPacket packet)
         {
-            await Socket.SendPacketAsync(packet, cancellationToken);
+            Console.WriteLine($"[{GetType().Name}] Sending packet for {(ServerOpcode)packet.Cmd}");
+            await Socket.SendPacketAsync(packet, _cancellationTokenSource.Token);
         }
 
         public void SendPacket(ServerPacket packet)
         {
-            Task.Run(() => SendPacketAsync(packet), _cancellationTokenSource.Token);
+            _ = SendPacketAsync(packet);
         }
 
         public virtual void Close()

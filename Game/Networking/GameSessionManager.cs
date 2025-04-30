@@ -1,66 +1,61 @@
-﻿using System.Collections.Concurrent;
+﻿using Core.Networking;
+using System.Collections.Concurrent;
 
 namespace Game.Networking
 {
-    public static class GameSessionManager
+    public sealed class GameSessionManager
     {
-        private static readonly ConcurrentDictionary<long, GameSession> _activeSessions = [];
-        private static readonly ConcurrentDictionary<long, GameSession> _pendingSessions = [];
-
-        private static int _sessionId = 0;
-        public static int SessionId { get { return _sessionId++; } }
-
-        public static void SetActiveSession(long gameAccountId, GameSession? activeSession)
+        private static GameSessionManager? _instance;
+        private static GameSessionManager Instance
         {
-            if (activeSession == null)
+            get
             {
-                _activeSessions.TryRemove(gameAccountId, out _);
+                if (_instance == null)
+                    _instance = new GameSessionManager();
+
+                return _instance;
             }
+        }
+
+        private readonly ConcurrentDictionary<int, WeakReference<GameSession>> _activeSessions = new();
+        private readonly ConcurrentDictionary<int, WeakReference<GameSession>> _targetSessions = new();
+
+        public static void SetActiveSession(int gameAccountId, GameSession session)
+        {
+            if (Instance._activeSessions.TryGetValue(gameAccountId, out WeakReference<GameSession>? activeSessionRef))
+                activeSessionRef.SetTarget(session);
             else
-            {
-                _activeSessions.TryRemove(gameAccountId, out _);
-                _activeSessions.TryAdd(gameAccountId, activeSession);
-            }
+                Instance._activeSessions.TryAdd(gameAccountId, new WeakReference<GameSession>(session));
         }
 
-        /*
-         * The client acts as following: when a new session has been established it is inactive at the moment.
-         * We have to send SMSG_SUSPEND_COMMS to the currently active session so its socket will be disconnected.
-         * Before it disconnects, we get a final CMSG_SUSPEND_COMMS_ACK packet, which will be our hint to switch over
-         * to the new socket
-         */
-
-        public static void InitiateSessionJump(long gameAccountId, GameSession newSession)
+        public static GameSession? GetActiveSession(int gameAccountId)
         {
-            if (!_pendingSessions.TryAdd(gameAccountId, newSession))
-            {
-                Console.WriteLine("[GameSessionManager] Could not prepare a new session because there already was a pending session!");
-                return;
-            }
+            if (!Instance._activeSessions.TryGetValue(gameAccountId, out WeakReference<GameSession>? activeSessionRef))
+                return null;
 
-            // Sending SMSG_SUSPEND_COMMS to the currently active socket so it can start the disconnecting process
-            if (_activeSessions.TryGetValue(gameAccountId, out GameSession? currentSession))
-                currentSession.SendSuspendComms();
+            if (!activeSessionRef.TryGetTarget(out GameSession? activeSession))
+                return null;
+
+            return activeSession;
         }
 
-        public static void FinalizeSessionJump(long gameAccountId)
+        public static void SetTargetSession(int gameAccountId, GameSession session)
         {
-            _activeSessions.TryGetValue(gameAccountId, out GameSession? currentSession);
-            if (!_pendingSessions.TryGetValue(gameAccountId, out GameSession? pendingSession))
-                return;
+            if (Instance._targetSessions.TryGetValue(gameAccountId, out WeakReference<GameSession>? activeSessionRef))
+                activeSessionRef.SetTarget(session);
+            else
+                Instance._targetSessions.TryAdd(gameAccountId, new WeakReference<GameSession>(session));
+        }
 
-            if (currentSession == null)
-            {
-                // The current session does not exist and the client attempts to fall back to a new session
-                // @todo
-                return;
-            }
+        public static GameSession? GetTargetSession(int gameAccountId)
+        {
+            if (!Instance._targetSessions.TryGetValue(gameAccountId, out WeakReference<GameSession>? activeSessionRef))
+                return null;
 
-            _activeSessions.TryRemove(gameAccountId, out _);
-            _activeSessions.TryAdd(gameAccountId, pendingSession);
-            _pendingSessions.TryRemove(gameAccountId, out _);
+            if (!activeSessionRef.TryGetTarget(out GameSession? activeSession))
+                return null;
 
-            pendingSession.SendResumeComms();
+            return activeSession;
         }
     }
 }
