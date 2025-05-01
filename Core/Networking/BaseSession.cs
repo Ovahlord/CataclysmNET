@@ -12,7 +12,6 @@ namespace Core.Networking
 
         public async Task SendPacketAsync(ServerPacket packet)
         {
-            Console.WriteLine($"[{GetType().Name}] Sending packet for {(ServerOpcode)packet.Cmd}");
             await Socket.SendPacketAsync(packet, _cancellationTokenSource.Token);
         }
 

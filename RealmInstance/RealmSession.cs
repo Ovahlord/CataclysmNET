@@ -4,6 +4,7 @@ using Core.Packets.Opcodes;
 using Database.RealmDatabase;
 using Database.RealmDatabase.Tables;
 using Game.Networking;
+using Game.Enums;
 using Game.Objects;
 using Game.Packets;
 using Game.Packets.Substructures;
@@ -23,6 +24,11 @@ namespace RealmInstance
                     base.CallPacketHandler(opcode, payload);
                     break;
             }
+        }
+
+        protected override void OnSessionAuthenticated()
+        {
+            SendConnectTo(Realm.Instance.GetConnectToEndPoint(), ConnectToConnectionType.Realm);
         }
 
         #region Packet Handlers

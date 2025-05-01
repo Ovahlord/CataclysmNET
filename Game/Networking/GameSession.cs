@@ -3,6 +3,7 @@ using Core.Networking;
 using Core.Packets.Opcodes;
 using Database.LoginDatabase;
 using Database.LoginDatabase.Tables;
+using Game.Enums;
 using Game.Packets;
 using Game.Packets.Helpers;
 using Microsoft.EntityFrameworkCore;
@@ -29,7 +30,7 @@ namespace Game.Networking
 
         public override void HandlePacket(int opcode, byte[] payload)
         {
-            Console.WriteLine($"[{GetType().Name}] Called packet handler for opcode: {(ClientOpcode)opcode} (Size: {payload.Length})");
+            Console.WriteLine($"[{GetType().Name}] Received {(ClientOpcode)opcode} (Size: {payload.Length})");
             CallPacketHandler((ClientOpcode)opcode, payload);
         }
 
@@ -49,6 +50,11 @@ namespace Game.Networking
                     break;
             }
         }
+
+        /// <summary>
+        /// This method is being invoked when the client has successfully authenticated in CMSG_AUTH_SESSION
+        /// </summary>
+        protected virtual void OnSessionAuthenticated() { }
 
         public override void Close()
         {
@@ -115,8 +121,8 @@ namespace Game.Networking
             // All checks have passed. Send the response and await new packets
             SendAuthResponseSuccess();
 
-            // And finally have the client connect to the actual active socket while this one serves as fallback
-            //SendConnectTo();
+            // Invoke a virtual method that allows realm sessions to continue with the login process
+            OnSessionAuthenticated();
         }
 
         private async Task HandleAuthContinuedSession(ClientAuthContinuedSession clientAuthContinuedSession)
@@ -168,8 +174,6 @@ namespace Game.Networking
         {
             if (_gameAccount == null)
                 return;
-
-            Console.WriteLine($"ClientSuspendCommsAck Serial: {clientSuspendCommsAck.Serial}");
 
             GameSession? targetSession = GameSessionManager.GetTargetSession(_gameAccount.Id);
             if (targetSession == null)
@@ -236,7 +240,7 @@ namespace Game.Networking
             SendPacket(packet);
         }
 
-        private void SendConnectTo(IPEndPoint where)
+        protected void SendConnectTo(IPEndPoint where, ConnectToConnectionType connectionType)
         {
             if (_gameAccount == null)
                 return;
@@ -244,7 +248,7 @@ namespace Game.Networking
             ConnectToKey key = new()
             {
                 AccountId = (uint)_gameAccount.Id,
-                ConnectionType = 0,
+                ConnectionType = (byte)connectionType,
                 Key = (uint)RandomNumberGenerator.GetInt32(0x7FFFFFFF)
             };
 

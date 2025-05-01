@@ -11,4 +11,8 @@
     <BaseOutputPath>..\bin\</BaseOutputPath>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\RealmInstance\RealmInstance.csproj" />
+  </ItemGroup>
+
 </Project>

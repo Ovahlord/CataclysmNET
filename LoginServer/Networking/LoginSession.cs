@@ -9,6 +9,7 @@ using System.Text;
 using Core.Networking;
 using Core.Cryptography;
 using Core.Packets.Opcodes;
+using Database.RealmDatabase;
 
 namespace LoginServer.Networking
 {
@@ -21,7 +22,7 @@ namespace LoginServer.Networking
 
         public override void HandlePacket(int opcode, byte[] payload)
         {
-            Console.WriteLine($"[{GetType().Name}] Called packet handler for opcode: {(LoginOpcode)opcode}\n");
+            Console.WriteLine($"[{GetType().Name}] Received: {(LoginOpcode)opcode} (Size: {payload.Length})");
             CallPacketHandler((LoginOpcode)opcode, payload);
         }
 
@@ -157,6 +158,8 @@ namespace LoginServer.Networking
             _gameAccount.SessionKey = sessionKey;
             await loginDatabase.SaveChangesAsync();
 
+            _loginState = LoginState.Authenticated;
+
             ServerAuthLogonProof packet = new()
             {
                 M2 = SRP6.GetSessionVerifier(logonProof.A, logonProof.ClientM, _gameAccount.SessionKey),
@@ -171,7 +174,13 @@ namespace LoginServer.Networking
 
         private async Task HandleRealmList(ClientRealmList realmList)
         {
+            if (_loginState != LoginState.Authenticated || _gameAccount == null)
+                return;
+
             // realmList comes with 32 bits of unk data. We ignore it for now
+            using RealmDatabaseContext realmDatabase = new();
+            List<RealmCharacters> realmCharacters = await realmDatabase.RealmCharacters.Where(rc => rc.GameAccountId == _gameAccount.Id).ToListAsync();
+
             ServerRealmList packet = new();
             foreach (Realms realm in RealmsStatusManager.RealmCache)
             {
@@ -182,7 +191,9 @@ namespace LoginServer.Networking
                     Flags = (RealmFlags)realm.Flags,
                     RealmType = realm.RealmType,
                     TimeZone = realm.TimeZone,
-                    RealmServerAddress = realm.FirstSocketAddress
+                    RealmServerAddress = realm.FirstSocketAddress,
+                    Locked = realm.Locked,
+                    Characters = (byte)realmCharacters.Count(rc => rc.RealmId == realm.Id)
                 });
             }
 

@@ -14,12 +14,12 @@ namespace RealmServer
             Console.WriteLine("===================================");
             Console.WriteLine();
 
-            _ = StartRealms();
+            StartRealms();
 
             Console.ReadLine();
         }
 
-        private static async Task StartRealms()
+        private static void StartRealms()
         {
             Console.WriteLine("Starting realms...");
 
@@ -27,7 +27,7 @@ namespace RealmServer
             {
                 // Load realm definitions from database
                 using RealmDatabaseContext realmDatabase = new();
-                List<Realms> realms = await realmDatabase.Realms.ToListAsync();
+                List<Realms> realms = realmDatabase.Realms.ToList();
                 if (realms.Count == 0)
                 {
                     Console.WriteLine("Realms table is empty. Cannot create realms.");
@@ -39,16 +39,17 @@ namespace RealmServer
                 // Prepare hosting process start info
                 ProcessStartInfo hostStartInfo = new()
                 {
-                    //CreateNoWindow = true,
                     FileName = "InstanceHost"
                 };
 
+                // Linux systems don't use .exe files, so we only add the extension on windows platforms
                 if (OperatingSystem.IsWindows())
                     hostStartInfo.FileName += ".exe";
 
+                // Spawning realms
                 foreach (Realms realm in realms)
                 {
-                    StartRealm(realm, hostStartInfo);
+                    StartRealmProcess(realm, hostStartInfo);
                 }
             }
             catch (Exception ex)
@@ -57,7 +58,12 @@ namespace RealmServer
             }
         }
 
-        private static void StartRealm(Realms realm, ProcessStartInfo hostStartInfo)
+        /// <summary>
+        /// Attempts to start the hosting process that will run the realm
+        /// </summary>
+        /// <param name="realm"></param>
+        /// <param name="hostStartInfo"></param>
+        private static void StartRealmProcess(Realms realm, ProcessStartInfo hostStartInfo)
         {
             Console.WriteLine($"Starting hosting process for realm '{realm.Name}'...");
 
