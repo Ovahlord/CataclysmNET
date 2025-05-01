@@ -2,7 +2,7 @@
 using Core.Networking;
 using Game.Networking;
 
-namespace RealmServer
+namespace RealmInstance
 {
     public sealed class RealmSocket(TcpClient client) : GameSocket(client)
     {

@@ -15,6 +15,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorldServer", "WorldServer\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Game", "Game\Game.csproj", "{62D869A6-2A20-4B69-8542-EA852A51BB92}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InstanceHost", "InstanceHost\InstanceHost.csproj", "{A4421B02-5F49-4270-900C-1E0FF94A0811}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RealmInstance", "RealmInstance\RealmInstance.csproj", "{B9BE79C6-B2FF-4F38-8FC7-C5DE8ADDEC1F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +49,14 @@ Global
 		{62D869A6-2A20-4B69-8542-EA852A51BB92}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{62D869A6-2A20-4B69-8542-EA852A51BB92}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{62D869A6-2A20-4B69-8542-EA852A51BB92}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A4421B02-5F49-4270-900C-1E0FF94A0811}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A4421B02-5F49-4270-900C-1E0FF94A0811}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A4421B02-5F49-4270-900C-1E0FF94A0811}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A4421B02-5F49-4270-900C-1E0FF94A0811}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B9BE79C6-B2FF-4F38-8FC7-C5DE8ADDEC1F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B9BE79C6-B2FF-4F38-8FC7-C5DE8ADDEC1F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B9BE79C6-B2FF-4F38-8FC7-C5DE8ADDEC1F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B9BE79C6-B2FF-4F38-8FC7-C5DE8ADDEC1F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

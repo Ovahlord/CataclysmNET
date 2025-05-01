@@ -116,7 +116,7 @@ namespace Game.Networking
             SendAuthResponseSuccess();
 
             // And finally have the client connect to the actual active socket while this one serves as fallback
-            SendConnectTo();
+            //SendConnectTo();
         }
 
         private async Task HandleAuthContinuedSession(ClientAuthContinuedSession clientAuthContinuedSession)
@@ -236,7 +236,7 @@ namespace Game.Networking
             SendPacket(packet);
         }
 
-        private void SendConnectTo()
+        private void SendConnectTo(IPEndPoint where)
         {
             if (_gameAccount == null)
                 return;
@@ -251,10 +251,7 @@ namespace Game.Networking
             ServerConnectTo packet = new()
             {
                 Serial = 14,
-                Payload = new()
-                {
-                    Where = IPEndPoint.Parse("127.0.0.1:140")
-                },
+                Payload = new(where),
                 Key = key.Raw
             };
 

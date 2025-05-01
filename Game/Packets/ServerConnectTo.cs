@@ -112,6 +112,9 @@ namespace Game.Packets
 
         public override ServerPacket Write()
         {
+            if (Payload == null)
+                return this;
+
             byte[] address = new byte[16];
             byte[] addressBytes = Payload.Where.Address.GetAddressBytes();
             Buffer.BlockCopy(addressBytes, 0, address, 0, addressBytes.Length);

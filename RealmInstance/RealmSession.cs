@@ -8,16 +8,13 @@ using Game.Objects;
 using Game.Packets;
 using Game.Packets.Substructures;
 using Microsoft.EntityFrameworkCore;
-using System.Threading.Tasks.Dataflow;
 
-namespace RealmServer
+namespace RealmInstance
 {
     public sealed class RealmSession(BaseSocket socket) : GameSession(socket)
     {
         protected override void CallPacketHandler(ClientOpcode opcode, byte[] payload)
         {
-            Console.WriteLine($"Session Index = {_sessionIndex}");
-
             switch (opcode)
             {
                 case ClientOpcode.CMSG_ENUM_CHARACTERS:     _ = HandleEnumCharacters(payload); break;
