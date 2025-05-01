@@ -59,6 +59,14 @@ namespace RealmInstance
             return _secondConnectionEndPoint;
         }
 
+        public int GetId()
+        {
+            if (_realmInfo == null)
+                throw new Exception("Tried to retrieve the realm Id from an uninitialized realm");
+
+            return _realmInfo.Id;
+        }
+
         private async Task ListenToConnectionsAsync()
         {
             if (_connectionListener1 == null || _connectionListener2 == null)

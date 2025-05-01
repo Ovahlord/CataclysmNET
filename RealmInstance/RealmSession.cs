@@ -52,14 +52,13 @@ namespace RealmInstance
                             on rc.CharacterId equals c.Id
                         join cs in realmDatabase.Set<CharacterStats>()
                             on c.Id equals cs.CharacterId
-                        where rc.GameAccountId == _gameAccount.Id
+                        where (rc.GameAccountId == _gameAccount.Id && rc.RealmId == Realm.Instance.GetId())
                         select new
                         {
                             RealmCharacters = rc,
                             Character = c,
                             Characterstats = cs,
                         };
-
 
             var result = await query.ToListAsync();
             if (result.Count == 0)
@@ -131,7 +130,7 @@ namespace RealmInstance
 
             RealmCharacters realmCharacter = new()
             {
-                RealmId = 1,
+                RealmId = Realm.Instance.GetId(),
                 GameAccountId = _gameAccount.Id,
                 CharacterId = newCharacter.Id
             };
