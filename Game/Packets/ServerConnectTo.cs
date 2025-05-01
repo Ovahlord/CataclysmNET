@@ -427,7 +427,7 @@ namespace Game.Packets
             BigInteger m = m2 + h * q;
 
             byte[] encrypedPayload = new byte[256];
-            m.TryWriteBytes(encrypedPayload, out _);
+            m.TryWriteBytes(encrypedPayload, out _, isUnsigned: true);
 
             return encrypedPayload;
         }
