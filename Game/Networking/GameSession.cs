@@ -22,8 +22,8 @@ namespace Game.Networking
     /// </summary>
     public abstract class GameSession(BaseSocket socket) : BaseSession(socket)
     {
-        private readonly BigInteger _encryptSeed = new(RandomNumberGenerator.GetBytes(16), true);
-        private readonly BigInteger _decryptSeed = new(RandomNumberGenerator.GetBytes(16), true);
+        private readonly byte[] _encryptSeed = RandomNumberGenerator.GetBytes(16);
+        private readonly byte[] _decryptSeed = RandomNumberGenerator.GetBytes(16);
         private readonly byte[] _authSeed = RandomNumberGenerator.GetBytes(4);
         protected GameAccounts? _gameAccount = null;
         protected int _sessionIndex = 0;
@@ -145,7 +145,7 @@ namespace Game.Networking
 
             // Initialize packet header encryption
             if (Socket is GameSocket socket)
-                socket.InitializePacketCrypt(_gameAccount.SessionKey, _encryptSeed.ToByteArray(true), _decryptSeed.ToByteArray(true));
+                socket.InitializePacketCrypt(_gameAccount.SessionKey, _encryptSeed, _decryptSeed);
 
             // Validate the hash that we have received from the client
             byte[] login = Encoding.UTF8.GetBytes(_gameAccount.Login.ToUpper());
@@ -202,8 +202,8 @@ namespace Game.Networking
 
             for (int i = 0; i < 4; ++i)
             {
-                packet.DosChallenge[i] = BitConverter.ToUInt32(_encryptSeed.ToByteArray(true), i * 4);
-                packet.DosChallenge[i + 4] = BitConverter.ToUInt32(_decryptSeed.ToByteArray(true), i * 4);
+                packet.DosChallenge[i] = BitConverter.ToUInt32(_encryptSeed, i * 4);
+                packet.DosChallenge[i + 4] = BitConverter.ToUInt32(_decryptSeed, i * 4);
             }
 
             SendPacket(packet);
@@ -211,20 +211,17 @@ namespace Game.Networking
 
         public void SendSuspendComms()
         {
-            ServerSuspendComms packet = new(20);
-            SendPacket(packet);
+            SendPacket(new ServerSuspendComms(20));
         }
 
         public void SendResumeComms()
         {
-            ServerResumeComms packet = new();
-            SendPacket(packet);
+            SendPacket(new ServerResumeComms());
         }
 
         private void SendAuthResponseError(ResponseCodes error)
         {
-            ServerAuthResponse packet = new((byte)error);
-            SendPacket(packet);
+            SendPacket(new ServerAuthResponse((byte)error));
         }
 
         private void SendAuthResponseSuccess()
