@@ -45,7 +45,7 @@ namespace Game.Networking
                 case ClientOpcode.CMSG_AUTH_SESSION:            _ = HandleAuthSession(payload); break;
                 case ClientOpcode.CMSG_AUTH_CONTINUED_SESSION:  _ = HandleAuthContinuedSession(payload); break;
                 case ClientOpcode.CMSG_SUSPEND_COMMS_ACK:       HandleClientSuspendCommsAck(payload); break;
-                case ClientOpcode.CMSG_PING:                    _ = HandleClientPing(payload); break;
+                case ClientOpcode.CMSG_PING:                    HandleClientPing(payload); break;
                 default:
                     break;
             }
@@ -183,9 +183,9 @@ namespace Game.Networking
             targetSession.SendResumeComms();
         }
 
-        private async Task HandleClientPing(ClientPing clientPing)
+        private void HandleClientPing(ClientPing clientPing)
         {
-            await SendPacketAsync(new ServerPong(clientPing.Serial));
+            SendPacket(new ServerPong(clientPing.Serial));
         }
 
         #endregion

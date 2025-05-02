@@ -4,6 +4,7 @@ using Core.Cryptography;
 using Core.Packets;
 using Core.Networking;
 using Game.Packets;
+using Org.BouncyCastle.Bcpg;
 
 namespace Game.Networking
 {
@@ -92,7 +93,7 @@ namespace Game.Networking
                 // We expect the first packet to initialize the connection.
                 if (!_connectionInitialized)
                 {
-                    if (!ReadConnectionInitialize(payload))
+                    if (!HandleConnectionInitialize(payload))
                     {
                         Close();
                         return;
@@ -109,19 +110,13 @@ namespace Game.Networking
             }
         }
 
-        public override async Task SendPacketAsync(ServerPacket packet, CancellationToken cancellation = default)
+        protected override byte[]? BuildPacketHeader(byte[] payload, int cmd)
         {
-            byte[] payload = packet.Write().GetRawPacket();
-            byte[] header = ServerPacket.BuildHeader(payload.Length + (_connectionInitialized ? 2 : 0), packet.Cmd);
+            byte[] header = ServerPacket.BuildHeader(payload.Length + (_connectionInitialized ? 2 : 0), cmd);
 
             // Encrypt the header when the session key has been validated
             _packetCrypt?.EncryptSend(header);
-
-            byte[] packetData = new byte[payload.Length + header.Length];
-            Buffer.BlockCopy(header, 0, packetData, 0, header.Length);
-            Buffer.BlockCopy(payload, 0, packetData, header.Length, payload.Length);
-
-            await WriteDataToStreamAsync(packetData, cancellation);
+            return header;
         }
 
         public void SendConnectionInitialize()
@@ -131,7 +126,7 @@ namespace Game.Networking
                 ConnectionInitialize = _serverConnectionInitialize
             };
 
-            Task.Run(() => SendPacketAsync(packet), _cancellationTokenSource.Token);
+            EnqueuePacket(packet);
         }
 
         public void InitializePacketCrypt(byte[] sessionKey)
@@ -144,7 +139,7 @@ namespace Game.Networking
             _packetCrypt = new(sessionKey, encryptionKey, decryptionKey);
         }
 
-        private bool ReadConnectionInitialize(ClientConnectionInitialize connectionInitialize)
+        private bool HandleConnectionInitialize(ClientConnectionInitialize connectionInitialize)
         {
             if (connectionInitialize.ConnectionInitialize != _clientConnectionInitialize)
                 return false;

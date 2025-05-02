@@ -40,7 +40,7 @@ namespace RealmInstance
             if (_gameAccount == null)
             {
                 packet.Success = false;
-                await SendPacketAsync(packet);
+                SendPacket(packet);
 
                 return;
             }
@@ -64,7 +64,7 @@ namespace RealmInstance
             if (result.Count == 0)
             {
                 packet.Success = true;
-                await SendPacketAsync(packet);
+                SendPacket(packet);
                 return;
             }
 
@@ -94,7 +94,7 @@ namespace RealmInstance
                 });
             }
 
-            await SendPacketAsync(packet);
+            SendPacket(packet);
         }
 
         private async Task HandleCreateCharacter(ClientCreateCharacter createCharacter)
@@ -145,7 +145,7 @@ namespace RealmInstance
                 Code = ResponseCodes.CHAR_CREATE_SUCCESS
             };
 
-            await SendPacketAsync(packet2);
+            SendPacket(packet2);
         }
 
         #endregion

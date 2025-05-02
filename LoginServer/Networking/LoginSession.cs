@@ -38,7 +38,7 @@ namespace LoginServer.Networking
             }
         }
 
-        private async Task SendLoginFailed(LoginOpcode cmd, LoginResult result)
+        private void SendLoginFailed(LoginOpcode cmd, LoginResult result)
         {
             switch (cmd)
             {
@@ -48,7 +48,7 @@ namespace LoginServer.Networking
                     {
                         Error = (byte)result
                     };
-                    await SendPacketAsync(packet);
+                    SendPacket(packet);
                     break;
                 }
                 case LoginOpcode.AuthLogonProof:
@@ -57,7 +57,7 @@ namespace LoginServer.Networking
                     {
                         Error = (byte)result
                     };
-                    await SendPacketAsync(packet);
+                    SendPacket(packet);
                     break;
                 }
                 default:
@@ -124,7 +124,7 @@ namespace LoginServer.Networking
                 Srp6Data = new(_srp6.B, SRP6.g, SRP6.N, _srp6.s, _versionChallenge)
             };
 
-            await SendPacketAsync(packet);
+            SendPacket(packet);
         }
 
         private async Task HandleAuthLogonProof(ClientAuthLogonProof logonProof)
@@ -136,13 +136,13 @@ namespace LoginServer.Networking
 
             if (_srp6 == null || _gameAccount == null)
             {
-                await SendLoginFailed(LoginOpcode.AuthLogonProof, LoginResult.WowFailFailNoaccess);
+                SendLoginFailed(LoginOpcode.AuthLogonProof, LoginResult.WowFailFailNoaccess);
                 return;
             }
 
             if (!_srp6.VerifyChallengeResponse(logonProof.A, logonProof.ClientM, out byte[]? sessionKey) || sessionKey == null)
             {
-                await SendLoginFailed(LoginOpcode.AuthLogonProof, LoginResult.WowFailIncorrectPassword);
+                SendLoginFailed(LoginOpcode.AuthLogonProof, LoginResult.WowFailIncorrectPassword);
                 return;
             }
 
@@ -151,7 +151,7 @@ namespace LoginServer.Networking
 
             if (_gameAccount == null)
             {
-                await SendLoginFailed(LoginOpcode.AuthLogonProof, LoginResult.WowFailFailNoaccess);
+                SendLoginFailed(LoginOpcode.AuthLogonProof, LoginResult.WowFailFailNoaccess);
                 return;
             }
 
@@ -169,7 +169,7 @@ namespace LoginServer.Networking
                 LoginFlags = 0
             };
 
-            await SendPacketAsync(packet);
+            SendPacket(packet);
         }
 
         private async Task HandleRealmList(ClientRealmList realmList)
@@ -197,7 +197,7 @@ namespace LoginServer.Networking
                 });
             }
 
-            await SendPacketAsync(packet);
+            SendPacket(packet);
         }
 
         #endregion

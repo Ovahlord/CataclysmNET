@@ -1,4 +1,5 @@
 ﻿using Core.Packets;
+using System.Collections.Concurrent;
 using System.Net.Sockets;
 
 namespace Core.Networking
@@ -10,6 +11,8 @@ namespace Core.Networking
     {
         protected readonly CancellationTokenSource _cancellationTokenSource = new();
         public BaseSession? Session { get; private set; }
+        private readonly SemaphoreSlim _writeSemaphore = new(0);
+        private readonly ConcurrentQueue<ServerPacket> _serverPacketQueue = new();
 
         /// <summary>
         /// Initializes the stream reading task so it can received packets from the client
@@ -17,7 +20,8 @@ namespace Core.Networking
         public void Start()
         {
             Console.WriteLine($"[{GetType().Name}] Started socket on endpoint {client.Client.LocalEndPoint} for client {client.Client.RemoteEndPoint}");
-            _ = ReadDataFromStream();
+            _ = ReadDataFromStreamAsync();
+            _ = WriteDataToStreamAsync();
         }
 
         /// <summary>
@@ -37,12 +41,11 @@ namespace Core.Networking
         /// <summary>
         /// Reads buffered data from the Tcp stream which has been sent by the client
         /// </summary>
-        private async Task ReadDataFromStream()
+        private async Task ReadDataFromStreamAsync()
         {
             try
             {
                 byte[] readBuffer = new byte[1024];
-
                 while (!_cancellationTokenSource.IsCancellationRequested)
                 {
                     int bytesReceived = await client.GetStream().ReadAsync(readBuffer, _cancellationTokenSource.Token);
@@ -70,35 +73,42 @@ namespace Core.Networking
             }
         }
 
-        /// <summary>
-        /// Writes buffered data to the Tcp stream which will be received by the client
-        /// </summary>
-        protected async Task WriteDataToStreamAsync(ReadOnlyMemory<byte> data, CancellationToken cancellationToken = default)
+        private async Task WriteDataToStreamAsync()
         {
             try
             {
-                await client.GetStream().WriteAsync(data, cancellationToken);
+                while (!_cancellationTokenSource.IsCancellationRequested)
+                {
+                    // Wait for the packet queue to actually have something to send.
+                    await _writeSemaphore.WaitAsync(_cancellationTokenSource.Token);
+                    while (_serverPacketQueue.TryDequeue(out ServerPacket? packet))
+                    {
+                        byte[] payload = packet.Write().GetRawPacket();
+                        byte[]? header = BuildPacketHeader(payload, packet.Cmd);
+
+                        if (header != null)
+                            await client.GetStream().WriteAsync(header, _cancellationTokenSource.Token);
+
+                        await client.GetStream().WriteAsync(payload, _cancellationTokenSource.Token);
+                    }
+                }
             }
             catch (OperationCanceledException) { }
             catch (Exception ex)
             {
                 Console.WriteLine(ex);
+                Close();
             }
         }
 
-        public virtual async Task SendPacketAsync(ServerPacket packet, CancellationToken cancellationToken = default)
+        public void EnqueuePacket(ServerPacket packet)
         {
-            try
-            {
-                await WriteDataToStreamAsync(packet.Write().GetRawPacket(), cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-            }
+            _serverPacketQueue.Enqueue(packet);
+            _writeSemaphore.Release();
         }
 
         public abstract BaseSession CreateSession();
         public abstract void DataReceived(byte[] data, int dataLength);
+        protected virtual byte[]? BuildPacketHeader(byte[] payload, int cmd) { return null; }
     }
 }
