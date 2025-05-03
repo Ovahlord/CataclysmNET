@@ -1,5 +1,6 @@
 ﻿using Core.Enums;
 using Core.Networking;
+using Core.Packets;
 using Core.Packets.Opcodes;
 using Database.LoginDatabase;
 using Database.LoginDatabase.Tables;
@@ -27,39 +28,37 @@ namespace Game.Networking
         private readonly byte[] _authSeed = RandomNumberGenerator.GetBytes(4);
         protected GameAccounts? _gameAccount = null;
 
-        public override void HandlePacket(int opcode, byte[] payload)
+        public override Task? HandlePacket(int opcode, byte[] payload)
         {
             Console.WriteLine($"[{GetType().Name}] Received {(ClientOpcode)opcode} (Size: {payload.Length})");
-            CallPacketHandler((ClientOpcode)opcode, payload);
-        }
 
-        /// <summary>
-        /// This method contains the packet handlers which Realm and World both share. Overrides should implement the server specific packets
-        /// </summary>
-        protected virtual void CallPacketHandler(ClientOpcode opcode, byte[] payload)
-        {
-            switch (opcode)
+            switch ((ClientOpcode)opcode)
             {
-                case ClientOpcode.CMSG_LOG_DISCONNECT:          HandleLogDisconnect(payload); break;
-                case ClientOpcode.CMSG_AUTH_SESSION:            _ = HandleAuthSession(payload); break;
-                case ClientOpcode.CMSG_AUTH_CONTINUED_SESSION:  _ = HandleAuthContinuedSession(payload); break;
-                case ClientOpcode.CMSG_SUSPEND_COMMS_ACK:       HandleClientSuspendCommsAck(payload); break;
-                case ClientOpcode.CMSG_PING:                    HandleClientPing(payload); break;
+                case ClientOpcode.CMSG_LOG_DISCONNECT:          return HandleLogDisconnect(payload);
+                case ClientOpcode.CMSG_AUTH_SESSION:            return HandleAuthSession(payload);
+                case ClientOpcode.CMSG_AUTH_CONTINUED_SESSION:  return HandleAuthContinuedSession(payload);
+                case ClientOpcode.CMSG_SUSPEND_COMMS_ACK:       return HandleSuspendCommsAck(payload);
+                case ClientOpcode.CMSG_PING:                    return HandlePing(payload);
                 default:
-                    break;
+                    return null;
             }
         }
 
-        /// <summary>
         /// This method is being invoked when the client has successfully authenticated in CMSG_AUTH_SESSION
         /// </summary>
         protected virtual void OnSessionAuthenticated() { }
 
+        public override void SendSuspendComms()
+        {
+            SendPacket(new ServerSuspendComms(20));
+        }
+
         #region Packet Handlers
 
-        private void HandleLogDisconnect(ClientLogDisconnect logDisconnect)
+        private Task HandleLogDisconnect(ClientLogDisconnect logDisconnect)
         {
             Console.WriteLine($"[{GetType().Name}] Client disconnected for reason: {(LogDisconnectReason)logDisconnect.Reason}");
+            return Task.CompletedTask;
         }
 
         private async Task HandleAuthSession(ClientAuthSession authSession)
@@ -113,7 +112,7 @@ namespace Game.Networking
             // All checks have passed. Send the response and await new packets
             SendAuthResponseSuccess();
 
-            // Invoke a virtual method that allows realm sessions to continue with the login process
+            // Invoke a virtual method that allows realm and world sessions to continue with the login process
             OnSessionAuthenticated();
         }
 
@@ -157,33 +156,29 @@ namespace Game.Networking
             Console.WriteLine($"[{GetType().Name}] HandleAuthContinuedSession successfully authenticated");
 
             // We have passed the authentication, inform the currently active session to suspend its communication
-            GameSession? activeSession = GameSessionManager.GetActiveSession(_gameAccount.Id);
-            if (activeSession != null)
-            {
-                activeSession.SendSuspendComms();
-                activeSession.SuspendComms();
-            }
-
+            GameSessionManager.GetActiveSession(_gameAccount.Id)?.DelayedSuspendComms();
         }
 
-        private void HandleClientSuspendCommsAck(ClientSuspendCommsAck clientSuspendCommsAck)
+        private Task HandleSuspendCommsAck(ClientSuspendCommsAck clientSuspendCommsAck)
         {
             if (_gameAccount == null)
-                return;
+                return Task.CompletedTask;
 
             // The client has noted our suspend comms request. At this point we now have to continue on the new socket.
 
             GameSession? targetSession = GameSessionManager.GetTargetSession(_gameAccount.Id);
             if (targetSession == null)
-                return;
+                return Task.CompletedTask;
 
             GameSessionManager.SetActiveSession(_gameAccount.Id, targetSession);
             targetSession.SendResumeComms();
+            return Task.CompletedTask;
         }
 
-        private void HandleClientPing(ClientPing clientPing)
+        private Task HandlePing(ClientPing clientPing)
         {
             SendPacket(new ServerPong(clientPing.Serial));
+            return Task.CompletedTask;
         }
 
         #endregion
@@ -205,11 +200,6 @@ namespace Game.Networking
             }
 
             SendPacket(packet);
-        }
-
-        public void SendSuspendComms()
-        {
-            SendPacket(new ServerSuspendComms(20));
         }
 
         public void SendResumeComms()

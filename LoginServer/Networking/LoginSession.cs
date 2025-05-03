@@ -10,6 +10,7 @@ using Core.Networking;
 using Core.Cryptography;
 using Core.Packets.Opcodes;
 using Database.RealmDatabase;
+using Core.Packets;
 
 namespace LoginServer.Networking
 {
@@ -20,21 +21,17 @@ namespace LoginServer.Networking
         private GameAccounts? _gameAccount = null;
         private readonly static byte[] _versionChallenge = [0xBA, 0xA3, 0x1E, 0x99, 0xA0, 0x0B, 0x21, 0x57, 0xFC, 0x37, 0x3F, 0xB3, 0x69, 0xCD, 0xD2, 0xF1];
 
-        public override void HandlePacket(int opcode, byte[] payload)
+        public override Task? HandlePacket(int opcode, byte[] payload)
         {
             Console.WriteLine($"[{GetType().Name}] Received: {(LoginOpcode)opcode} (Size: {payload.Length})");
-            CallPacketHandler((LoginOpcode)opcode, payload);
-        }
 
-        private void CallPacketHandler(LoginOpcode opcode, byte[] payload)
-        {
-            switch (opcode)
+            switch ((LoginOpcode)opcode)
             {
-                case LoginOpcode.AuthLogonChallenge:    _ = HandleAuthLogonChallenge(payload); break;
-                case LoginOpcode.AuthLogonProof:        _ = HandleAuthLogonProof(payload); break;
-                case LoginOpcode.RealmList:             _ = HandleRealmList(payload); break;
+                case LoginOpcode.AuthLogonChallenge:    return HandleAuthLogonChallenge(payload);
+                case LoginOpcode.AuthLogonProof:        return HandleAuthLogonProof(payload);
+                case LoginOpcode.RealmList:             return HandleRealmList(payload);
                 default:
-                    break;
+                    return null;
             }
         }
 
@@ -66,6 +63,7 @@ namespace LoginServer.Networking
         }
 
         #region Packet Handlers
+
         private async Task HandleAuthLogonChallenge(ClientAuthLogonChallenge logonChallenge)
         {
             // We only allow one login attempt per session. The client disconnects after failed attempts so when this packet comes again, we know it's a cheater.

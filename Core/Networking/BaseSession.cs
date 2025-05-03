@@ -7,7 +7,8 @@ namespace Core.Networking
     {
         protected BaseSocket Socket => socket;
 
-        public abstract void HandlePacket(int opcode, byte[] payload);
+
+        public abstract Task? HandlePacket(int opcode, byte[] payload);
 
         /// <summary>
         /// Enqueues the packet in the socket's packet queue which will send it as soon as possible
@@ -34,11 +35,18 @@ namespace Core.Networking
         }
 
         /// <summary>
-        /// Suspends the server-to-client communication which prevents the socket from receiving further server packets. Used only for switching between sessions
+        /// Suspends the server-to-client communication after processing all remaining packets, which prevents the socket from receiving further server packets. Used only for switching between sessions
         /// </summary>
-        public void SuspendComms()
+        public void DelayedSuspendComms()
         {
-            Socket.SuspendComms();
+            Socket.DelayedSuspendComms();
+        }
+
+        /// <summary>
+        /// Sends a SMSG_SUSPEND_COMMS ServerPacket to the client, signaling that it should no longer send or receive packets
+        /// </summary>
+        public virtual void SendSuspendComms()
+        {
         }
     }
 }

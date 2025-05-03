@@ -15,7 +15,8 @@ namespace Core.Networking
         private readonly ConcurrentQueue<ServerPacket> _serverPacketQueue = new();
         private bool _isClosing = false;
         private bool _isClosed = false;
-        private bool _isCommsSuspended = false;
+        private bool _commsSuspending = false;
+        private bool _commsSuspended = false;
 
         /// <summary>
         /// Initializes the stream reading task so it can received packets from the client
@@ -57,11 +58,24 @@ namespace Core.Networking
         }
 
         /// <summary>
+        /// Suspends the server-to-client communication after processing remaining packets, which means it will no longer receive any packets from the server
+        /// </summary>
+        public void DelayedSuspendComms()
+        {
+            _commsSuspending = true;
+        }
+
+        /// <summary>
         /// Suspends the server-to-client communication, which means it will no longer receive any packets from the server
         /// </summary>
-        public void SuspendComms()
+        private void SuspendComms()
         {
-            _isCommsSuspended = true;
+            if (_commsSuspended)
+                return;
+
+            // We send the packet before setting the boolean so we can squeeze that one last packed through
+            Session?.SendSuspendComms();
+            _commsSuspended = true;
         }
 
         /// <summary>
@@ -71,7 +85,7 @@ namespace Core.Networking
         {
             try
             {
-                byte[] readBuffer = new byte[1024];
+                byte[] readBuffer = new byte[4096];
 
                 // Only accept incoming packets while we are not closing
                 while (!_isClosed && !_isClosing)
@@ -88,7 +102,17 @@ namespace Core.Networking
                     if (Session == null)
                         Session = CreateSession();
 
-                    DataReceived(readBuffer, bytesReceived);
+                    // Extract the packets from the streamed data and handle them
+                    Task[]? packetHandlerTasks = HandlePackets(readBuffer, bytesReceived);
+
+                    // When we are about to suspend the communication of the client, we have to make sure all packets are processed
+                    if (_commsSuspending && !_commsSuspended)
+                    {
+                        if (packetHandlerTasks != null)
+                            await Task.WhenAll(packetHandlerTasks);
+
+                        SuspendComms();
+                    }
                 }
 
                 return;
@@ -115,18 +139,23 @@ namespace Core.Networking
                     if (_isClosed)
                         return;
 
-                    while (_serverPacketQueue.TryDequeue(out ServerPacket? packet))
+                    if (_serverPacketQueue.TryDequeue(out ServerPacket? packet))
                     {
+                        //if (packet.Cmd != 0)
+                            Console.WriteLine($"[{GetType().Name}] Sending {(ServerOpcode)packet.Cmd}");
+
                         byte[] payload = packet.Write().GetRawPacket();
                         byte[]? header = BuildPacketHeader(payload, packet.Cmd);
 
                         if (header != null)
-                            await client.GetStream().WriteAsync(header);
-
-                        if (packet.Cmd != 0)
-                            Console.WriteLine($"[{GetType().Name}] Sending {(ServerOpcode)packet.Cmd}");
-
-                        await client.GetStream().WriteAsync(payload);
+                        {
+                            byte[] sendBuffer = new byte[header.Length + payload.Length];
+                            Buffer.BlockCopy(header, 0, sendBuffer, 0, header.Length);
+                            Buffer.BlockCopy(payload, 0, sendBuffer, header.Length, payload.Length);
+                            await client.GetStream().WriteAsync(sendBuffer);
+                        }
+                        else
+                            await client.GetStream().WriteAsync(payload);
                     }
 
                     // If all remaining packets have been sent out, we may finally close the socket
@@ -148,15 +177,15 @@ namespace Core.Networking
         public void EnqueuePacket(ServerPacket packet)
         {
             // The the communication has been suspended
-            if (_isCommsSuspended)
+            if (_commsSuspended)
                 return;
 
             _serverPacketQueue.Enqueue(packet);
             _writeSemaphore.Release();
         }
 
-        public abstract BaseSession CreateSession();
-        public abstract void DataReceived(byte[] data, int dataLength);
+        protected abstract BaseSession CreateSession();
+        protected virtual Task[]? HandlePackets(byte[] data, int dataLength) { return null; }
         protected virtual byte[]? BuildPacketHeader(byte[] payload, int cmd) { return null; }
     }
 }

@@ -5,6 +5,7 @@ using Core.Packets;
 using Core.Networking;
 using Game.Packets;
 using Org.BouncyCastle.Bcpg;
+using System.Threading.Tasks;
 
 namespace Game.Networking
 {
@@ -32,9 +33,11 @@ namespace Game.Networking
         byte[]? payload = null;
         int payloadBytesReceived = 0;
 
-        public override void DataReceived(byte[] data, int dataLength)
+        protected override Task[]? HandlePackets(byte[] data, int dataLength)
         {
             int processedBytes = 0;
+
+            List<Task> tasks = [];
 
             // We use a while loop here because a streamed message chunk may cointain multiple packets
             while (processedBytes < dataLength)
@@ -58,7 +61,7 @@ namespace Game.Networking
 
                 // Header has been not been fully read yet but we ran out of bytes to read. Wait for the next stream input
                 if (header.Length != headerBytesReceived)
-                    return;
+                    continue;
 
                 // We will now extract the packet size and opcode from the header and initialize the payload buffer
                 if (payload == null)
@@ -73,7 +76,7 @@ namespace Game.Networking
                 {
                     Console.WriteLine($"[{GetType().Name}] Received broken header. Possible broken encryption?");
                     Close();
-                    return;
+                    return null;
                 }
 
                 // Extract the payload from the streamed buffer
@@ -88,7 +91,7 @@ namespace Game.Networking
 
                 // Payload has been not been fully read yet but we ran out of bytes to read. Wait for the next stream input
                 if (payload.Length != payloadBytesReceived)
-                    return;
+                    return null;
 
                 // We expect the first packet to initialize the connection.
                 if (!_connectionInitialized)
@@ -96,7 +99,7 @@ namespace Game.Networking
                     if (!HandleConnectionInitialize(payload))
                     {
                         Close();
-                        return;
+                        return null;
                     }
 
                     header = null;
@@ -104,10 +107,18 @@ namespace Game.Networking
                     continue;
                 }
 
-                Session?.HandlePacket(_cmd, payload);
+                Task? task = Session?.HandlePacket(_cmd, payload);
+                if (task != null)
+                    tasks.Add(task);
+
                 header = null;
                 payload = null;
             }
+
+            if (tasks.Count == 0)
+                return null;
+
+            return tasks.ToArray();
         }
 
         protected override byte[]? BuildPacketHeader(byte[] payload, int cmd)

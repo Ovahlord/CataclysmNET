@@ -9,20 +9,20 @@ using Game.Objects;
 using Game.Packets;
 using Game.Packets.Substructures;
 using Microsoft.EntityFrameworkCore;
+using Core.Packets;
 
 namespace RealmInstance
 {
     public sealed class RealmSession(BaseSocket socket) : GameSession(socket)
     {
-        protected override void CallPacketHandler(ClientOpcode opcode, byte[] payload)
+        public override Task? HandlePacket(int opcode, byte[] payload)
         {
-            switch (opcode)
+            switch ((ClientOpcode)opcode)
             {
-                case ClientOpcode.CMSG_ENUM_CHARACTERS:     _ = HandleEnumCharacters(payload); break;
-                case ClientOpcode.CMSG_CREATE_CHARACTER:    _ = HandleCreateCharacter(payload); break;
+                case ClientOpcode.CMSG_ENUM_CHARACTERS:     return HandleEnumCharacters(payload);
+                case ClientOpcode.CMSG_CREATE_CHARACTER:    return HandleCreateCharacter(payload);
                 default:
-                    base.CallPacketHandler(opcode, payload);
-                    break;
+                    return base.HandlePacket(opcode, payload);
             }
         }
 
