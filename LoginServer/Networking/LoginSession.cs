@@ -137,6 +137,7 @@ namespace LoginServer.Networking
             if (_srp6 == null || _gameAccount == null)
             {
                 SendLoginFailed(LoginOpcode.AuthLogonProof, LoginResult.WowFailFailNoaccess);
+                DelayedClose();
                 return;
             }
 
@@ -152,6 +153,7 @@ namespace LoginServer.Networking
             if (_gameAccount == null)
             {
                 SendLoginFailed(LoginOpcode.AuthLogonProof, LoginResult.WowFailFailNoaccess);
+                DelayedClose();
                 return;
             }
 

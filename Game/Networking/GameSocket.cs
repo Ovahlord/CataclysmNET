@@ -37,7 +37,7 @@ namespace Game.Networking
             int processedBytes = 0;
 
             // We use a while loop here because a streamed message chunk may cointain multiple packets
-            while (!_cancellationTokenSource.IsCancellationRequested && processedBytes < dataLength)
+            while (processedBytes < dataLength)
             {
                 // Prepare a new header buffer to read
                 if (header == null)

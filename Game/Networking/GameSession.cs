@@ -26,7 +26,6 @@ namespace Game.Networking
         private readonly byte[] _decryptSeed = RandomNumberGenerator.GetBytes(16);
         private readonly byte[] _authSeed = RandomNumberGenerator.GetBytes(4);
         protected GameAccounts? _gameAccount = null;
-        protected int _sessionIndex = 0;
 
         public override void HandlePacket(int opcode, byte[] payload)
         {
@@ -56,14 +55,6 @@ namespace Game.Networking
         /// </summary>
         protected virtual void OnSessionAuthenticated() { }
 
-        public override void Close()
-        {
-            if (_cancellationTokenSource.IsCancellationRequested)
-                return;
-
-            base.Close();
-        }
-
         #region Packet Handlers
 
         private void HandleLogDisconnect(ClientLogDisconnect logDisconnect)
@@ -80,7 +71,7 @@ namespace Game.Networking
             if (_gameAccount == null)
             {
                 SendAuthResponseError(ResponseCodes.AUTH_UNKNOWN_ACCOUNT);
-                //Close();
+                DelayedClose();
                 return;
             }
 
@@ -104,6 +95,7 @@ namespace Game.Networking
             if (hash == null)
             {
                 SendAuthResponseError(ResponseCodes.AUTH_REJECT);
+                DelayedClose();
                 return;
             }
 
@@ -112,7 +104,7 @@ namespace Game.Networking
             {
                 Console.WriteLine($"[{GetType().Name}] hash verification failed");
                 SendAuthResponseError(ResponseCodes.AUTH_FAILED);
-                //Close();
+                DelayedClose();
                 return;
             }
 
@@ -138,8 +130,6 @@ namespace Game.Networking
                 return;
             }
 
-            _sessionIndex = 1;
-
             // Mark our current session as target session as we prepare to transition over to it
             GameSessionManager.SetTargetSession(_gameAccount.Id, this);
 
@@ -160,20 +150,28 @@ namespace Game.Networking
             {
                 Console.WriteLine($"[{GetType().Name}] hash verification failed");
                 SendAuthResponseError(ResponseCodes.AUTH_FAILED);
-                //Close();
+                DelayedClose();
                 return;
             }
 
             Console.WriteLine($"[{GetType().Name}] HandleAuthContinuedSession successfully authenticated");
 
-            // We have passed the authentication, inform the currently active session to drop its communication
-            GameSessionManager.GetActiveSession(_gameAccount.Id)?.SendSuspendComms();
+            // We have passed the authentication, inform the currently active session to suspend its communication
+            GameSession? activeSession = GameSessionManager.GetActiveSession(_gameAccount.Id);
+            if (activeSession != null)
+            {
+                activeSession.SendSuspendComms();
+                activeSession.SuspendComms();
+            }
+
         }
 
         private void HandleClientSuspendCommsAck(ClientSuspendCommsAck clientSuspendCommsAck)
         {
             if (_gameAccount == null)
                 return;
+
+            // The client has noted our suspend comms request. At this point we now have to continue on the new socket.
 
             GameSession? targetSession = GameSessionManager.GetTargetSession(_gameAccount.Id);
             if (targetSession == null)
