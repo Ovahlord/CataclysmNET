@@ -82,11 +82,14 @@ namespace RealmInstance
 
                     TcpClient client = await completedTask;
                     RealmSocket socket = new(client);
-                    socket.Start();
+                    socket.Open();
                     socket.SendConnectionInitialize();
                 }
             }
-            catch (Exception) { }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Realm '{_realmInfo?.Name}'] exception: {ex}");
+            }
         }
     }
 }

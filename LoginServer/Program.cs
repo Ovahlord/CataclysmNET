@@ -35,7 +35,7 @@ namespace LoginServer
         private static void StartSocket(TcpClient client)
         {
             LoginSocket socket = new(client);
-            socket.Start();
+            socket.Open();
         }
     }
 }

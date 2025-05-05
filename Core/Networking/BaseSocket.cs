@@ -10,22 +10,38 @@ namespace Core.Networking
     /// </summary>
     public abstract class BaseSocket(TcpClient client)
     {
+        private enum SocketState
+        {
+            Open        = 0,
+            Closed      = 1,
+            Closing     = 2,
+            Suspending  = 3,
+            Suspended   = 4
+        }
+
         public BaseSession? Session { get; private set; }
         private readonly SemaphoreSlim _writeSemaphore = new(0);
+        private readonly CancellationTokenSource _writeCancellationTokenSource = new();
+        private readonly CancellationTokenSource _readCancellationTokenSource = new();
+
         private readonly ConcurrentQueue<ServerPacket> _serverPacketQueue = new();
-        private bool _isClosing = false;
-        private bool _isClosed = false;
-        private bool _commsSuspending = false;
-        private bool _commsSuspended = false;
+        private SocketState _state = SocketState.Closed;
+        private Task? _readTask;
+        private Task? _writeTask;
 
         /// <summary>
         /// Initializes the stream reading task so it can received packets from the client
         /// </summary>
-        public void Start()
+        public void Open()
         {
+            if (_state == SocketState.Open)
+                return;
+
             Console.WriteLine($"[{GetType().Name}] Started socket on endpoint {client.Client.LocalEndPoint} for client {client.Client.RemoteEndPoint}");
-            _ = ReadDataFromStreamAsync();
-            _ = WriteDataToStreamAsync();
+
+            _state = SocketState.Open;
+            _readTask = ReadDataFromStreamAsync();
+            _writeTask = WriteDataToStreamAsync();
         }
 
         /// <summary>
@@ -33,10 +49,16 @@ namespace Core.Networking
         /// </summary>
         public void Close()
         {
-            if (_isClosed)
+            if (_state == SocketState.Closed)
                 return;
 
-            _isClosed = true;
+            _readCancellationTokenSource.Cancel();
+            _writeCancellationTokenSource.Cancel();
+
+            if (_readTask == null || _writeTask == null)
+                throw new Exception("One of the stream tasks in BaseSocket has been null, which most not happen at this point!");
+
+            Task.WhenAll(_readTask, _writeTask).Wait();
 
             Console.WriteLine($"[{GetType().Name}] Closed socket for client {client.Client.RemoteEndPoint}");
             client.Close();
@@ -48,10 +70,10 @@ namespace Core.Networking
         /// </summary>
         public void DelayedClose()
         {
-            if (_isClosing)
+            if (_state == SocketState.Closed || _state == SocketState.Closing)
                 return;
 
-            _isClosing = true;
+            _state = SocketState.Closing;
 
             if (_serverPacketQueue.IsEmpty)
                 Close();
@@ -62,7 +84,12 @@ namespace Core.Networking
         /// </summary>
         public void DelayedSuspendComms()
         {
-            _commsSuspending = true;
+            if (_state == SocketState.Suspending)
+                return;
+
+            Console.WriteLine($"[{GetType().Name}] DelayedSuspendComms invoked");
+
+            _state = SocketState.Suspending;
         }
 
         /// <summary>
@@ -70,12 +97,14 @@ namespace Core.Networking
         /// </summary>
         private void SuspendComms()
         {
-            if (_commsSuspended)
+            if (_state != SocketState.Suspending || _state == SocketState.Suspended)
                 return;
+
+            Console.WriteLine($"[{GetType().Name}] SuspendComms invoked");
 
             // We send the packet before setting the boolean so we can squeeze that one last packed through
             Session?.SendSuspendComms();
-            _commsSuspended = true;
+            _state = SocketState.Suspended;
         }
 
         /// <summary>
@@ -88,9 +117,9 @@ namespace Core.Networking
                 byte[] readBuffer = new byte[4096];
 
                 // Only accept incoming packets while we are not closing
-                while (!_isClosed && !_isClosing)
+                while (_state != SocketState.Closing && !_readCancellationTokenSource.IsCancellationRequested)
                 {
-                    int bytesReceived = await client.GetStream().ReadAsync(readBuffer);
+                    int bytesReceived = await client.GetStream().ReadAsync(readBuffer, _readCancellationTokenSource.Token);
                     // Receiving 0 bytes means that the client has been closed or lost its connection
                     if (bytesReceived == 0)
                     {
@@ -104,15 +133,12 @@ namespace Core.Networking
 
                     // Extract the packets from the streamed data and handle them
                     Task[]? packetHandlerTasks = HandlePackets(readBuffer, bytesReceived);
+                    if (packetHandlerTasks != null)
+                        await Task.WhenAll(packetHandlerTasks);
 
                     // When we are about to suspend the communication of the client, we have to make sure all packets are processed
-                    if (_commsSuspending && !_commsSuspended)
-                    {
-                        if (packetHandlerTasks != null)
-                            await Task.WhenAll(packetHandlerTasks);
-
+                    if (_state == SocketState.Suspending)
                         SuspendComms();
-                    }
                 }
 
                 return;
@@ -130,36 +156,35 @@ namespace Core.Networking
             try
             {
                 // Allow packets to get written to the socket before closing down
-                while (!_isClosed)
+                while (!_writeCancellationTokenSource.IsCancellationRequested)
                 {
                     // Wait for the packet queue to actually have something to send.
-                    await _writeSemaphore.WaitAsync();
+                    await _writeSemaphore.WaitAsync(_writeCancellationTokenSource.Token);
 
-                    // The socket may have closed why we have waited for the next packet in queue
-                    if (_isClosed)
-                        return;
-
-                    if (_serverPacketQueue.TryDequeue(out ServerPacket? packet))
+                    while (!_serverPacketQueue.IsEmpty)
                     {
-                        //if (packet.Cmd != 0)
+                        if (_serverPacketQueue.TryDequeue(out ServerPacket? packet))
+                        {
+                            //if (packet.Cmd != 0)
                             Console.WriteLine($"[{GetType().Name}] Sending {(ServerOpcode)packet.Cmd}");
 
-                        byte[] payload = packet.Write().GetRawPacket();
-                        byte[]? header = BuildPacketHeader(payload, packet.Cmd);
+                            byte[] payload = packet.Write().GetRawPacket();
+                            byte[]? header = BuildPacketHeader(payload, packet.Cmd);
 
-                        if (header != null)
-                        {
-                            byte[] sendBuffer = new byte[header.Length + payload.Length];
-                            Buffer.BlockCopy(header, 0, sendBuffer, 0, header.Length);
-                            Buffer.BlockCopy(payload, 0, sendBuffer, header.Length, payload.Length);
-                            await client.GetStream().WriteAsync(sendBuffer);
+                            if (header != null)
+                            {
+                                byte[] sendBuffer = new byte[header.Length + payload.Length];
+                                Buffer.BlockCopy(header, 0, sendBuffer, 0, header.Length);
+                                Buffer.BlockCopy(payload, 0, sendBuffer, header.Length, payload.Length);
+                                await client.GetStream().WriteAsync(sendBuffer, _writeCancellationTokenSource.Token);
+                            }
+                            else
+                                await client.GetStream().WriteAsync(payload, _writeCancellationTokenSource.Token);
                         }
-                        else
-                            await client.GetStream().WriteAsync(payload);
                     }
 
                     // If all remaining packets have been sent out, we may finally close the socket
-                    if (_isClosing)
+                    if (_state == SocketState.Closing)
                         Close();
                 }
             }
@@ -177,7 +202,7 @@ namespace Core.Networking
         public void EnqueuePacket(ServerPacket packet)
         {
             // The the communication has been suspended
-            if (_commsSuspended)
+            if (_state == SocketState.Closed || _state == SocketState.Suspended)
                 return;
 
             _serverPacketQueue.Enqueue(packet);
