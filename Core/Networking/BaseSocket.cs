@@ -84,12 +84,13 @@ namespace Core.Networking
         /// </summary>
         public void DelayedSuspendComms()
         {
-            if (_state == SocketState.Suspending)
+            if (_state == SocketState.Suspending || _state == SocketState.Suspended)
                 return;
 
-            Console.WriteLine($"[{GetType().Name}] DelayedSuspendComms invoked");
-
-            _state = SocketState.Suspending;
+            if (client.GetStream().DataAvailable)
+                _state = SocketState.Suspending;
+            else
+                SuspendComms();
         }
 
         /// <summary>
@@ -97,10 +98,8 @@ namespace Core.Networking
         /// </summary>
         private void SuspendComms()
         {
-            if (_state != SocketState.Suspending || _state == SocketState.Suspended)
+            if (_state == SocketState.Suspended)
                 return;
-
-            Console.WriteLine($"[{GetType().Name}] SuspendComms invoked");
 
             // We send the packet before setting the boolean so we can squeeze that one last packed through
             Session?.SendSuspendComms();
@@ -136,7 +135,7 @@ namespace Core.Networking
                     if (packetHandlerTasks != null)
                         await Task.WhenAll(packetHandlerTasks);
 
-                    // When we are about to suspend the communication of the client, we have to make sure all packets are processed
+                    // After waiting for remaining client packets to arrive, we will now tell the client to pause its communication.
                     if (_state == SocketState.Suspending)
                         SuspendComms();
                 }
@@ -165,8 +164,8 @@ namespace Core.Networking
                     {
                         if (_serverPacketQueue.TryDequeue(out ServerPacket? packet))
                         {
-                            //if (packet.Cmd != 0)
-                            Console.WriteLine($"[{GetType().Name}] Sending {(ServerOpcode)packet.Cmd}");
+                            if (packet.Cmd != 0)
+                                Console.WriteLine($"[{GetType().Name}] Sending {(ServerOpcode)packet.Cmd}");
 
                             byte[] payload = packet.Write().GetRawPacket();
                             byte[]? header = BuildPacketHeader(payload, packet.Cmd);
