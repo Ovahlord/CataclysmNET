@@ -1,20 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-
-  <PropertyGroup>
-    <BaseOutputPath>..\bin\</BaseOutputPath>
-    <ApplicationIcon>worldserver.ico</ApplicationIcon>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <Content Include="worldserver.ico" />
-  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj" />

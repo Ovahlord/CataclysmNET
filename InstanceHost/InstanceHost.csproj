@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\RealmInstance\RealmInstance.csproj" />
+    <ProjectReference Include="..\WorldInstance\WorldInstance.csproj" />
   </ItemGroup>
 
 </Project>

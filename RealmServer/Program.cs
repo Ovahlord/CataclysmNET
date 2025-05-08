@@ -1,6 +1,5 @@
 ﻿using Database.RealmDatabase;
 using Database.RealmDatabase.Tables;
-using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 
 namespace RealmServer
@@ -37,10 +36,7 @@ namespace RealmServer
                 Console.WriteLine($"Loaded {realms.Count} definition(s) for realms.");
 
                 // Prepare hosting process start info
-                ProcessStartInfo hostStartInfo = new()
-                {
-                    FileName = "InstanceHost"
-                };
+                ProcessStartInfo hostStartInfo = new("InstanceHost");
 
                 // Linux systems don't use .exe files, so we only add the extension on windows platforms
                 if (OperatingSystem.IsWindows())

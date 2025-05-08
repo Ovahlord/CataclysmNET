@@ -23,7 +23,7 @@ namespace InstanceHost
                     {
                         if (int.TryParse(args[1], out int realmId) && int.TryParse(args[1], out int mapId))
                             LaunchWorldInstance(realmId, mapId);
-                            break;
+                        break;
                     }
                     default:
                         break;
@@ -45,7 +45,8 @@ namespace InstanceHost
 
         private static void LaunchWorldInstance(int realmId, int mapId)
         {
-
+            WorldInstance.Launcher worldLauncher = new();
+            _ = worldLauncher.Launch(realmId, mapId);
         }
     }
 }
