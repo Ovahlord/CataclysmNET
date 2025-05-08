@@ -16,5 +16,7 @@ namespace Database.RealmDatabase.Tables
         public byte HairColorId { get; set; }
         public byte FacialHairStyleId { get; set; }
         public byte OutfitId { get; set; }
+
+        public CharacterStats? CharacterStats { get; set; }
     }
 }

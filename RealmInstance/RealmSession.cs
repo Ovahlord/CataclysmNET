@@ -46,22 +46,12 @@ namespace RealmInstance
             }
 
             using RealmDatabaseContext realmDatabase = new();
+            List<RealmCharacters> realmCharacters = await realmDatabase.RealmCharacters
+                .Include(rc => rc.Character)
+                .ThenInclude(c => c != null? c.CharacterStats : null)
+                .Where(rc => rc.GameAccountId == _gameAccount.Id && rc.RealmId == Realm.Instance.GetId()).ToListAsync();
 
-            var query = from rc in realmDatabase.Set<RealmCharacters>()
-                        join c in realmDatabase.Set<Characters>()
-                            on rc.CharacterId equals c.Id
-                        join cs in realmDatabase.Set<CharacterStats>()
-                            on c.Id equals cs.CharacterId
-                        where (rc.GameAccountId == _gameAccount.Id && rc.RealmId == Realm.Instance.GetId())
-                        select new
-                        {
-                            RealmCharacters = rc,
-                            Character = c,
-                            Characterstats = cs,
-                        };
-
-            var result = await query.ToListAsync();
-            if (result.Count == 0)
+            if (realmCharacters.Count == 0)
             {
                 packet.Success = true;
                 SendPacket(packet);
@@ -70,27 +60,30 @@ namespace RealmInstance
 
             packet.Success = true;
 
-            foreach (var character in result)
+            foreach (RealmCharacters realmCharacter in realmCharacters)
             {
                 CharacterListItem[] inventoryItems = new CharacterListItem[23];
                 Array.Fill(inventoryItems, new CharacterListItem());
 
+                if (realmCharacter.Character == null || realmCharacter.Character.CharacterStats == null)
+                    continue;
+
                 packet.Characters.Add(new CharacterListEntry()
                 {
-                     Name = character.Character.Name,
-                     Guid = new ObjectGuid(HighGuid.Player, 0, (uint)character.Character.Id),
+                     Name = realmCharacter.Character.Name,
+                     Guid = new ObjectGuid(HighGuid.Player, 0, (uint)realmCharacter.Character.Id),
                      MapID = 0,
-                     ClassID = character.Character.ClassId,
-                     FaceID = character.Character.FaceId,
-                     FacialHair = character.Character.FacialHairStyleId,
-                     HairColor = character.Character.HairColorId,
-                     HairStyle = character.Character.HairStyleId,
-                     ListPosition = character.RealmCharacters.ListPosition,
-                     RaceID = character.Character.RaceId,
-                     SexID = character.Character.SexId,
-                     SkinID = character.Character.SkinId,
+                     ClassID = realmCharacter.Character.ClassId,
+                     FaceID = realmCharacter.Character.FaceId,
+                     FacialHair = realmCharacter.Character.FacialHairStyleId,
+                     HairColor = realmCharacter.Character.HairColorId,
+                     HairStyle = realmCharacter.Character.HairStyleId,
+                     ListPosition = realmCharacter.ListPosition,
+                     RaceID = realmCharacter.Character.RaceId,
+                     SexID = realmCharacter.Character.SexId,
+                     SkinID = realmCharacter.Character.SkinId,
                      InventoryItems = inventoryItems,
-                     ExperienceLevel = character.Characterstats.ExperienceLevel
+                     ExperienceLevel = realmCharacter.Character.CharacterStats.ExperienceLevel
                 });
             }
 
@@ -102,9 +95,12 @@ namespace RealmInstance
             if (_gameAccount == null)
                 return;
 
+            // Normalize the character name - capitalize first letter and lowercase the remaining letters
+            string characterName = char.ToUpper(createCharacter.Name[0]) + createCharacter.Name.Substring(1).ToLower();
+
             Characters newCharacter = new()
             {
-                Name = createCharacter.Name,
+                Name = characterName,
                 RaceId = createCharacter.RaceID,
                 ClassId = createCharacter.ClassID,
                 SexId = createCharacter.SexID,
@@ -113,7 +109,7 @@ namespace RealmInstance
                 HairStyleId = createCharacter.HairStyleID,
                 HairColorId = createCharacter.HairColorID,
                 FacialHairStyleId = createCharacter.FacialHairStyleID,
-                OutfitId = createCharacter.OutfitID,
+                OutfitId = createCharacter.OutfitID
             };
 
             // Save the new character to database
@@ -132,20 +128,22 @@ namespace RealmInstance
             {
                 RealmId = Realm.Instance.GetId(),
                 GameAccountId = _gameAccount.Id,
-                CharacterId = newCharacter.Id
+                CharacterId = newCharacter.Id,
             };
 
+            newCharacter.CharacterStats = characterStats;
+
             // And finally we store the stats and realm characters
-            realmDatabase.CharacterStats.Add(characterStats);
             realmDatabase.RealmCharacters.Add(realmCharacter);
+            realmDatabase.CharacterStats.Add(characterStats);
             await realmDatabase.SaveChangesAsync();
 
-            ServerCreateChar packet2 = new()
+            ServerCreateChar packet = new()
             {
                 Code = ResponseCodes.CHAR_CREATE_SUCCESS
             };
 
-            SendPacket(packet2);
+            SendPacket(packet);
         }
 
         #endregion
