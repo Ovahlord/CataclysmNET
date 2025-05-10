@@ -17,7 +17,8 @@ namespace WorldInstance
                 if (realmInfo == null)
                     throw new Exception($"Data for RealmInstance (realm Id {realmId}) could not be loaded from database");
 
-
+                World.Instance.Initialize(realmInfo, mapRecId);
+                World.Instance.Open();
             }
             catch (Exception ex)
             {

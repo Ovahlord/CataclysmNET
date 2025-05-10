@@ -21,8 +21,8 @@ namespace RealmInstance
             _realmInfo = realmInfo;
 
             // Setting up the connection end points
-            if (!IPEndPoint.TryParse(realmInfo.FirstSocketAddress, out _firstConnectionEndPoint)
-                || !IPEndPoint.TryParse(realmInfo.SecondSocketAddress, out _secondConnectionEndPoint))
+            if (!IPEndPoint.TryParse($"{realmInfo.SocketAddress}:{realmInfo.FirstRealmSocketPort}", out _firstConnectionEndPoint)
+                || !IPEndPoint.TryParse($"{realmInfo.SocketAddress}:{realmInfo.SecondRealmSocketPort}", out _secondConnectionEndPoint))
                 throw new Exception($"Could not parse one of the provided realm socket addresses for realm Id {realmInfo.Id}");
 
             _connectionListener1 = new(_firstConnectionEndPoint);
@@ -54,9 +54,17 @@ namespace RealmInstance
         public IPEndPoint GetConnectToEndPoint()
         {
             if (_secondConnectionEndPoint == null)
-                throw new Exception("Tried to retrieve the endpoin for SMSG_CONNECT_TO from an uninitialized realm");
+                throw new Exception("Tried to retrieve the endpoint for SMSG_CONNECT_TO from an uninitialized realm");
 
             return _secondConnectionEndPoint;
+        }
+
+        public IPEndPoint GetConnectToEndPointForMapInstance(int mapRecId)
+        {
+            if (_realmInfo == null)
+                throw new Exception("Tried to retrieve the endpoint for SMSG_CONNECT_TO from an uninitialized realm");
+
+            return IPEndPoint.Parse($"{_realmInfo.SocketAddress}:{_realmInfo.FirstWorldSocketPort + mapRecId}");
         }
 
         public int GetId()

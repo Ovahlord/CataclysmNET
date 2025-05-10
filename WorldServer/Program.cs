@@ -46,6 +46,7 @@ namespace WorldServer
                 foreach (Realms realm in realms)
                 {
                     StartWorldProcess(realm, 0, hostStartInfo);
+                    StartWorldProcess(realm, 1, hostStartInfo);
                 }
             }
             catch (Exception ex)
@@ -61,7 +62,7 @@ namespace WorldServer
         /// <param name="hostStartInfo"></param>
         private static void StartWorldProcess(Realms realm, int mapRecId, ProcessStartInfo hostStartInfo)
         {
-            Console.WriteLine($"Starting hosting process for Map 'NYI' on realm '{realm.Name}'...");
+            Console.WriteLine($"Starting hosting process for Map '{mapRecId}' on realm '{realm.Name}'...");
 
             hostStartInfo.Arguments = $"World {realm.Id} {mapRecId}";
             Process? process = Process.Start(hostStartInfo);

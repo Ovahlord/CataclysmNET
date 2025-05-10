@@ -76,7 +76,35 @@ namespace Core.Packets
             return value;
         }
 
-        void ReadByteSeq(ref byte b)
+        protected byte[] StartBitStream(params byte[] values)
+        {
+            byte[] bytes = new byte[values.Length];
+
+            foreach (byte value in values)
+            {
+                bytes[value] = (byte)(ReadBit() ? 1 : 0);
+            }
+
+            return bytes;
+        }
+
+        protected byte[] ParseBitStream(Span<byte> stream, params byte[] values)
+        {
+            var tempBytes = new byte[values.Length];
+            var i = 0;
+
+            foreach (byte value in values)
+            {
+                if (stream[value] != 0)
+                    stream[value] ^= ReadByte();
+
+                tempBytes[i++] = stream[value];
+            }
+
+            return tempBytes;
+        }
+
+        protected void ReadByteSeq(ref byte b)
         {
             if (b != 0)
                 b ^= ReadByte();

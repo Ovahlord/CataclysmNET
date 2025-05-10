@@ -1,6 +1,7 @@
 ﻿using System;
+using System.Buffers.Binary;
 
-namespace Game.Objects
+namespace Game.Entities
 {
     public enum TypeId
     {
@@ -62,6 +63,11 @@ namespace Game.Objects
             return new ObjectGuid(raw);
         }
 
+        public static implicit operator ObjectGuid(byte[] bytes)
+        {
+            return new ObjectGuid(BinaryPrimitives.ReadUInt64LittleEndian(bytes));
+        }
+
         public static readonly ObjectGuid Empty = new(0);
 
         public ulong RawValue { get; private set; }
@@ -78,23 +84,23 @@ namespace Game.Objects
 
         public ObjectGuid(HighGuid high, uint entry, uint counter)
         {
-            RawValue = counter != 0 ? counter | ((ulong)entry << 32) | ((ulong)high << ((high == HighGuid.Corpse || high == HighGuid.AreaTrigger) ? 48 : 52)) : 0;
+            RawValue = counter != 0 ? counter | (ulong)entry << 32 | (ulong)high << (high == HighGuid.Corpse || high == HighGuid.AreaTrigger ? 48 : 52) : 0;
         }
 
         public ObjectGuid(HighGuid high, uint counter)
         {
-            RawValue = counter != 0 ? counter | ((ulong)high << ((high == HighGuid.Corpse || high == HighGuid.AreaTrigger) ? 48 : 52)) : 0;
+            RawValue = counter != 0 ? counter | (ulong)high << (high == HighGuid.Corpse || high == HighGuid.AreaTrigger ? 48 : 52) : 0;
         }
 
         public HighGuid GetHigh()
         {
-            HighGuid temp = (HighGuid)((RawValue >> 48) & 0xFFFF);
-            return (temp == HighGuid.Corpse || temp == HighGuid.AreaTrigger) ? temp : (HighGuid)(((uint)temp >> 4) & 0xFFF);
+            HighGuid temp = (HighGuid)(RawValue >> 48 & 0xFFFF);
+            return temp == HighGuid.Corpse || temp == HighGuid.AreaTrigger ? temp : (HighGuid)((uint)temp >> 4 & 0xFFF);
         }
 
         public uint GetEntry()
         {
-            return HasEntry() ? (uint)((RawValue >> 32) & 0xFFFFF) : 0;
+            return HasEntry() ? (uint)(RawValue >> 32 & 0xFFFFF) : 0;
         }
 
         public uint GetCounter()
@@ -166,7 +172,16 @@ namespace Game.Objects
                 if (index < 0 || index > 7)
                     throw new ArgumentOutOfRangeException("index must be within byte range (0 - 7)");
 
-                return (byte)((RawValue >> (index * 8)) & 0xFF);
+                return (byte)(RawValue >> index * 8 & 0xFF);
+            }
+
+            set
+            {
+                if (index < 0 || index > 7)
+                    throw new ArgumentOutOfRangeException("index must be within byte range (0 - 7)");
+
+                RawValue &= ~(0xFFUL << index * 8);
+                RawValue |= (ulong)value << index * 8;
             }
         }
 
@@ -212,7 +227,7 @@ namespace Game.Objects
 
             for (byte i = 0; i < 8; ++i)
             {
-                byte val = (byte)((raw >> (i * 8)) & 0xFF);
+                byte val = (byte)(raw >> i * 8 & 0xFF);
                 if (val != 0)
                 {
                     _packedGuid[0] |= (byte)(1 << i);

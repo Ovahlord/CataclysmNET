@@ -191,7 +191,7 @@ namespace LoginServer.Networking
                     Flags = (RealmFlags)realm.Flags,
                     RealmType = realm.RealmType,
                     TimeZone = realm.TimeZone,
-                    RealmServerAddress = realm.FirstSocketAddress,
+                    RealmServerAddress = $"{realm.SocketAddress}:{realm.FirstRealmSocketPort}",
                     Locked = realm.Locked,
                     Characters = (byte)realmCharacters.Count(rc => rc.RealmId == realm.Id)
                 });

@@ -21,8 +21,8 @@ namespace InstanceHost
                     }
                     case "World":
                     {
-                        if (int.TryParse(args[1], out int realmId) && int.TryParse(args[1], out int mapId))
-                            LaunchWorldInstance(realmId, mapId);
+                        if (int.TryParse(args[1], out int realmId) && int.TryParse(args[2], out int mapRecId))
+                            LaunchWorldInstance(realmId, mapRecId);
                         break;
                     }
                     default:
@@ -43,10 +43,10 @@ namespace InstanceHost
             _= realmLauncher.Launch(realmId);
         }
 
-        private static void LaunchWorldInstance(int realmId, int mapId)
+        private static void LaunchWorldInstance(int realmId, int mapRecId)
         {
             WorldInstance.Launcher worldLauncher = new();
-            _ = worldLauncher.Launch(realmId, mapId);
+            _ = worldLauncher.Launch(realmId, mapRecId);
         }
     }
 }

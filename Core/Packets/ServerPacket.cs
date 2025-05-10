@@ -44,6 +44,25 @@ namespace Core.Packets
             WriteByte(0);
         }
 
+        protected void WritePackGUID(ulong guid)
+        {
+            Span<byte> packGUID = stackalloc byte[8 + 1];
+            byte size = 1;
+            for (byte i = 0; guid != 0; ++i)
+            {
+                if ((guid & 0xFF) != 0)
+                {
+                    packGUID[0] |= (byte)(1 << i);
+                    packGUID[size] = (byte)(guid & 0xFF);
+                    ++size;
+                }
+
+                guid >>= 8;
+            }
+
+            WriteBytes(packGUID.Slice(0, size));
+        }
+
         protected void FlushBits()
         {
             if (_bitPosition == 0)

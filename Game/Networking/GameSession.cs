@@ -44,9 +44,25 @@ namespace Game.Networking
             }
         }
 
-        /// This method is being invoked when the client has successfully authenticated in CMSG_AUTH_SESSION
+        /// <summary>
+        /// This method is being invoked when the client has successfully authenticated in CMSG_AUTH_SESSION and CMSG_AUTH_CONTINUED_SESSION
         /// </summary>
-        protected virtual void OnSessionAuthenticated() { }
+        protected virtual void OnSessionAuthenticated(bool requestedByServer)
+        {
+            if (_gameAccount == null)
+                return;
+
+            if (requestedByServer)
+            {
+                GameSession? activeSession = GameSessionManager.GetActiveSession(_gameAccount.Id);
+
+                // If we already have an active game session while connecting, we switch over by starting with a suspend comms packet
+                if (activeSession != null)
+                    GameSessionManager.GetActiveSession(_gameAccount.Id)?.DelayedSuspendComms();
+                else // otherwise, if this is our very first connection (only possible for world connections) we allow a direct activation for the first time
+                    GameSessionManager.SetActiveSession(_gameAccount.Id, this);
+            }
+        }
 
         public override void SendSuspendComms()
         {
@@ -113,7 +129,7 @@ namespace Game.Networking
             SendAuthResponseSuccess();
 
             // Invoke a virtual method that allows realm and world sessions to continue with the login process
-            OnSessionAuthenticated();
+            OnSessionAuthenticated(false);
         }
 
         private async Task HandleAuthContinuedSession(ClientAuthContinuedSession clientAuthContinuedSession)
@@ -155,8 +171,7 @@ namespace Game.Networking
 
             Console.WriteLine($"[{GetType().Name}] HandleAuthContinuedSession successfully authenticated");
 
-            // We have passed the authentication, inform the currently active session to suspend its communication
-            GameSessionManager.GetActiveSession(_gameAccount.Id)?.DelayedSuspendComms();
+            OnSessionAuthenticated(true);
         }
 
         private Task HandleSuspendCommsAck(ClientSuspendCommsAck clientSuspendCommsAck)

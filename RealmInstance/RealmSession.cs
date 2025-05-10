@@ -5,11 +5,11 @@ using Database.RealmDatabase;
 using Database.RealmDatabase.Tables;
 using Game.Networking;
 using Game.Enums;
-using Game.Objects;
 using Game.Packets;
 using Game.Packets.Substructures;
 using Microsoft.EntityFrameworkCore;
 using Core.Packets;
+using Game.Entities;
 
 namespace RealmInstance
 {
@@ -21,14 +21,19 @@ namespace RealmInstance
             {
                 case ClientOpcode.CMSG_ENUM_CHARACTERS:     return HandleEnumCharacters(payload);
                 case ClientOpcode.CMSG_CREATE_CHARACTER:    return HandleCreateCharacter(payload);
+                case ClientOpcode.CMSG_PLAYER_LOGIN:        return HandlePlayerLogin(payload);
                 default:
                     return base.HandlePacket(opcode, payload);
             }
         }
 
-        protected override void OnSessionAuthenticated()
+        protected override void OnSessionAuthenticated(bool requestedByServer)
         {
-            SendConnectTo(Realm.Instance.GetConnectToEndPoint(), ConnectToConnectionType.Realm);
+            // When we connected for the first time, immediately redirect to the 2nd socket which uses secure keys
+            if (!requestedByServer)
+                SendConnectTo(Realm.Instance.GetConnectToEndPoint(), ConnectToConnectionType.Realm);
+
+            base.OnSessionAuthenticated(requestedByServer);
         }
 
         #region Packet Handlers
@@ -144,6 +149,16 @@ namespace RealmInstance
             };
 
             SendPacket(packet);
+        }
+
+        private async Task HandlePlayerLogin(ClientPlayerLogin playerLogin)
+        {
+            if (_gameAccount == null)
+                return;
+
+            Console.WriteLine(playerLogin.PlayerGUID.ToString());
+
+            SendConnectTo(Realm.Instance.GetConnectToEndPointForMapInstance(0), ConnectToConnectionType.Instance);
         }
 
         #endregion
