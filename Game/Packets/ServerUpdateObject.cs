@@ -273,8 +273,98 @@ namespace Game.Packets
 
             if (worldObject.CreateObjectBits.MovementTransport)
             {
+                if (worldObject.MovementStatus.Transport == null)
+                    throw new NullReferenceException($"WorldObject (GUID: {worldObject.Guid})" + $" was flagged for sending transport data in SMSG_UPDATE_OBJECT but it had no transport reference!");
 
+                WriteByteSeq(worldObject.MovementStatus.Transport.Guid[0]);
+                WriteByteSeq(worldObject.MovementStatus.Transport.Guid[5]);
+
+                if (worldObject.MovementStatus.Transport.VehicleRecID.HasValue)
+                    WriteInt32(worldObject.MovementStatus.Transport.VehicleRecID.Value);
+
+                WriteByteSeq(worldObject.MovementStatus.Transport.Guid[3]);
+                WriteFloat(worldObject.MovementStatus.Transport.Position.X);
+                WriteByteSeq(worldObject.MovementStatus.Transport.Guid[4]);
+                WriteByteSeq(worldObject.MovementStatus.Transport.Guid[6]);
+                WriteByteSeq(worldObject.MovementStatus.Transport.Guid[1]);
+                WriteUInt32(worldObject.MovementStatus.Transport.MoveTime);
+                WriteFloat(worldObject.MovementStatus.Transport.Position.Y);
+                WriteByteSeq(worldObject.MovementStatus.Transport.Guid[2]);
+                WriteByteSeq(worldObject.MovementStatus.Transport.Guid[7]);
+                WriteFloat(worldObject.MovementStatus.Transport.Position.Z);
+                WriteByte(worldObject.MovementStatus.Transport.VehicleSeatIndex);
+                WriteFloat(worldObject.MovementStatus.Transport.Facing);
+
+                if (worldObject.MovementStatus.Transport.PrevMoveTime.HasValue)
+                    WriteUInt32(worldObject.MovementStatus.Transport.PrevMoveTime.Value);
             }
+
+            if (worldObject.CreateObjectBits.Rotation)
+            {
+                // @todo
+                //WriteUInt64(0); -- ToGameObject()->GetPackedLocalRotation()
+            }
+
+            if (worldObject.CreateObjectBits.AreaTrigger)
+            {
+                // Unused by the client (wasn't ready in 4.3.4)
+                WriteFloat(0f);
+                WriteFloat(0f);
+                WriteFloat(0f);
+                WriteFloat(0f);
+                WriteByte(0);
+                WriteFloat(0f);
+                WriteFloat(0f);
+                WriteFloat(0f);
+                WriteFloat(0f);
+                WriteFloat(0f);
+                WriteFloat(0f);
+                WriteFloat(0f);
+                WriteFloat(0f);
+                WriteFloat(0f);
+                WriteFloat(0f);
+                WriteFloat(0f);
+                WriteFloat(0f);
+            }
+
+            if (worldObject.CreateObjectBits.Stationary)
+            {
+                // @todo
+                //WriteFloat(self->GetStationaryO());
+                //WriteFloat(self->GetStationaryX());
+                //WriteFloat(self->GetStationaryY());
+                //WriteFloat(self->GetStationaryZ());
+            }
+
+            if (worldObject.CreateObjectBits.CombatVictim)
+            {
+                // @todo
+                //ObjectGuid guid = ObjectGuid.Empty;
+                //WriteByteSeq(guid[4]);
+                //WriteByteSeq(guid[0]);
+                //WriteByteSeq(guid[3]);
+                //WriteByteSeq(guid[5]);
+                //WriteByteSeq(guid[7]);
+                //WriteByteSeq(guid[6]);
+                //WriteByteSeq(guid[2]);
+                //WriteByteSeq(guid[1]);
+            }
+
+            if (worldObject.CreateObjectBits.AnimKit)
+            {
+                // @todo
+                // if (hasAIAnimKit)
+                //    WriteUInt16(self->GetAIAnimKitId());
+
+                //if (hasMovementAnimKit)
+                //    WriteUInt16(self->GetMovementAnimKitId());
+
+                //if (hasMeleeAnimKit)
+                //    WriteUInt16(self->GetMeleeAnimKitId());
+            }
+
+            if (worldObject.CreateObjectBits.ServerTime)
+                WriteUInt32(0); // GameTime::GetGameTimeMS() @todo
         }
 
         private void WriteUpdateFields(BaseObject baseObject)
