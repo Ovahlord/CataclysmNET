@@ -150,14 +150,16 @@ namespace RealmInstance
             SendPacket(packet);
         }
 
-        private async Task HandlePlayerLogin(ClientPlayerLogin playerLogin)
+        private /*async*/ Task HandlePlayerLogin(ClientPlayerLogin playerLogin)
         {
             if (_gameAccount == null)
-                return;
+                return Task.CompletedTask;
 
             Console.WriteLine(playerLogin.PlayerGUID.ToString());
 
             SendConnectTo(Realm.Instance.GetConnectToEndPointForMapInstance(0), ConnectToConnectionType.Instance);
+
+            return Task.CompletedTask;
         }
 
         #endregion
