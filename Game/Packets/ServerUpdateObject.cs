@@ -1,9 +1,9 @@
 ﻿using Core.Packets;
 using Core.Packets.Opcodes;
+using Game.Entities.GameObject;
 using Game.Entities.Object;
 using Game.Entities.Unit;
 using Game.Enums;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Game.Packets
 {
@@ -301,8 +301,10 @@ namespace Game.Packets
 
             if (worldObject.CreateObjectBits.Rotation)
             {
-                // @todo
-                //WriteUInt64(0); -- ToGameObject()->GetPackedLocalRotation()
+                if (worldObject is not GameObject gameObject)
+                    throw new Exception($"WorldObject (GUID: {worldObject.Guid}) has CreateObjectBits.Rotation but is not a gameObject!");
+
+                WriteInt64(gameObject.PackedLocalRotation);
             }
 
             if (worldObject.CreateObjectBits.AreaTrigger)
@@ -329,11 +331,10 @@ namespace Game.Packets
 
             if (worldObject.CreateObjectBits.Stationary)
             {
-                // @todo
-                //WriteFloat(self->GetStationaryO());
-                //WriteFloat(self->GetStationaryX());
-                //WriteFloat(self->GetStationaryY());
-                //WriteFloat(self->GetStationaryZ());
+                WriteFloat(worldObject.MovementStatus.Facing);
+                WriteFloat(worldObject.MovementStatus.Position.X);
+                WriteFloat(worldObject.MovementStatus.Position.Y);
+                WriteFloat(worldObject.MovementStatus.Position.Z);
             }
 
             if (worldObject.CreateObjectBits.CombatVictim)
