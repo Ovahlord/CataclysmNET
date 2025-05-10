@@ -89,6 +89,8 @@ namespace Core.Packets
             return bit;
         }
 
+        protected bool WriteBit(byte bit) { return WriteBit(bit != 0); }
+
         protected void WriteBits(ulong value, int bits)
         {
             value &= (1UL << bits) - 1;

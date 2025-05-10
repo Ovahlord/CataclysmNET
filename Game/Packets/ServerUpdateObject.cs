@@ -80,9 +80,9 @@ namespace Game.Packets
             {
                 WriteBit(worldObject.MovementStatus.MovementFlags0 == MovementFlags0.None);
                 WriteBit(worldObject.MovementStatus.Facing != 0f);
-                WriteBit(worldObject.Guid[7] != 0);
-                WriteBit(worldObject.Guid[3] != 0);
-                WriteBit(worldObject.Guid[2] != 0);
+                WriteBit(worldObject.Guid[7]);
+                WriteBit(worldObject.Guid[3]);
+                WriteBit(worldObject.Guid[2]);
 
                 if (worldObject.MovementStatus.MovementFlags0 != MovementFlags0.None)
                     WriteBits((uint)worldObject.MovementStatus.MovementFlags0, 30);
@@ -92,36 +92,36 @@ namespace Game.Packets
                 WriteBit(false); // Has spline data (independent)
                 WriteBit(worldObject.MovementStatus.Fall != null);
                 WriteBit(true); // !Has spline elevation
-                WriteBit(worldObject.Guid[5] != 0);
+                WriteBit(worldObject.Guid[5]);
                 WriteBit(worldObject.MovementStatus.Transport != null);
                 WriteBit(worldObject.MovementStatus.MoveTime == 0);
 
                 if (worldObject.MovementStatus.Transport != null)
                 {
-                    WriteBit(worldObject.MovementStatus.Transport.Guid[1] != 0);
+                    WriteBit(worldObject.MovementStatus.Transport.Guid[1]);
                     WriteBit(worldObject.MovementStatus.Transport.PrevMoveTime.HasValue);
-                    WriteBit(worldObject.MovementStatus.Transport.Guid[4] != 0);
-                    WriteBit(worldObject.MovementStatus.Transport.Guid[0] != 0);
-                    WriteBit(worldObject.MovementStatus.Transport.Guid[6] != 0);
+                    WriteBit(worldObject.MovementStatus.Transport.Guid[4]);
+                    WriteBit(worldObject.MovementStatus.Transport.Guid[0]);
+                    WriteBit(worldObject.MovementStatus.Transport.Guid[6]);
                     WriteBit(worldObject.MovementStatus.Transport.VehicleRecID.HasValue);
-                    WriteBit(worldObject.MovementStatus.Transport.Guid[7] != 0);
-                    WriteBit(worldObject.MovementStatus.Transport.Guid[5] != 0);
-                    WriteBit(worldObject.MovementStatus.Transport.Guid[3] != 0);
-                    WriteBit(worldObject.MovementStatus.Transport.Guid[2] != 0);
+                    WriteBit(worldObject.MovementStatus.Transport.Guid[7]);
+                    WriteBit(worldObject.MovementStatus.Transport.Guid[5]);
+                    WriteBit(worldObject.MovementStatus.Transport.Guid[3]);
+                    WriteBit(worldObject.MovementStatus.Transport.Guid[2]);
                 }
 
-                WriteBit(worldObject.Guid[4] != 0);
+                WriteBit(worldObject.Guid[4]);
 
                 //if (hasSpline)
                 //    Movement::PacketBuilder::WriteCreateBits(*self->movespline, *data);
 
-                WriteBit(worldObject.Guid[6] != 0);
+                WriteBit(worldObject.Guid[6]);
 
                 if (worldObject.MovementStatus.Fall != null)
                     WriteBit(worldObject.MovementStatus.Fall.Velocity != null);
 
-                WriteBit(worldObject.Guid[0] != 0);
-                WriteBit(worldObject.Guid[1] != 0);
+                WriteBit(worldObject.Guid[0]);
+                WriteBit(worldObject.Guid[1]);
                 WriteBit(worldObject.MovementStatus.HeightChangeFailed);
                 WriteBit(worldObject.MovementStatus.MovementFlags1 == MovementFlags1.None);
 
@@ -134,30 +134,30 @@ namespace Game.Packets
                 if (worldObject.MovementStatus.Transport == null)
                     throw new NullReferenceException($"WorldObject (GUID: {worldObject.Guid})" +$" was flagged for sending transport data in SMSG_UPDATE_OBJECT but it had no transport reference!");
 
-                WriteBit(worldObject.MovementStatus.Transport.Guid[5] != 0);
+                WriteBit(worldObject.MovementStatus.Transport.Guid[5]);
                 WriteBit(worldObject.MovementStatus.Transport.VehicleRecID.HasValue);
-                WriteBit(worldObject.MovementStatus.Transport.Guid[0] != 0);
-                WriteBit(worldObject.MovementStatus.Transport.Guid[3] != 0);
-                WriteBit(worldObject.MovementStatus.Transport.Guid[6] != 0);
-                WriteBit(worldObject.MovementStatus.Transport.Guid[1] != 0);
-                WriteBit(worldObject.MovementStatus.Transport.Guid[4] != 0);
-                WriteBit(worldObject.MovementStatus.Transport.Guid[2] != 0);
+                WriteBit(worldObject.MovementStatus.Transport.Guid[0]);
+                WriteBit(worldObject.MovementStatus.Transport.Guid[3]);
+                WriteBit(worldObject.MovementStatus.Transport.Guid[6]);
+                WriteBit(worldObject.MovementStatus.Transport.Guid[1]);
+                WriteBit(worldObject.MovementStatus.Transport.Guid[4]);
+                WriteBit(worldObject.MovementStatus.Transport.Guid[2]);
                 WriteBit(worldObject.MovementStatus.Transport.PrevMoveTime.HasValue);
-                WriteBit(worldObject.MovementStatus.Transport.Guid[7] != 0);
+                WriteBit(worldObject.MovementStatus.Transport.Guid[7]);
             }
 
             if (worldObject.CreateObjectBits.CombatVictim)
             {
                 // @todo
                 //ObjectGuid guid = ObjectGuid.Empty;
-                //WriteBit(guid[2] != 0);
-                //WriteBit(guid[7] != 0);
-                //WriteBit(guid[0] != 0);
-                //WriteBit(guid[4] != 0);
-                //WriteBit(guid[5] != 0);
-                //WriteBit(guid[6] != 0);
-                //WriteBit(guid[1] != 0);
-                //WriteBit(guid[3] != 0);
+                //WriteBit(guid[2]);
+                //WriteBit(guid[7]);
+                //WriteBit(guid[0]);
+                //WriteBit(guid[4]);
+                //WriteBit(guid[5]);
+                //WriteBit(guid[6]);
+                //WriteBit(guid[1]);
+                //WriteBit(guid[3]);
             }
 
             if (worldObject.CreateObjectBits.AnimKit)
@@ -259,6 +259,21 @@ namespace Game.Packets
                 //WriteFloat(worldObject.MovementStatus.Pitch);
 
                 WriteFloat(unit.Stats.FlightBackSpeed);
+            }
+
+            if (worldObject.CreateObjectBits.Vehicle)
+            {
+                if (worldObject.MovementStatus.Transport != null)
+                    WriteFloat(worldObject.MovementStatus.Transport.Facing);
+                else
+                    WriteFloat(worldObject.MovementStatus.Facing);
+
+                WriteUInt32(0); // GetVehicleKit()->GetVehicleInfo()->ID
+            }
+
+            if (worldObject.CreateObjectBits.MovementTransport)
+            {
+
             }
         }
 
