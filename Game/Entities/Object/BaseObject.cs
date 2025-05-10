@@ -1,4 +1,4 @@
-﻿namespace Game.Entities
+﻿namespace Game.Entities.Object
 {
     public abstract class BaseObject(ObjectGuid guid)
     {

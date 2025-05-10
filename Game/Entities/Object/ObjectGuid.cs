@@ -1,7 +1,6 @@
-﻿using System;
-using System.Buffers.Binary;
+﻿using System.Buffers.Binary;
 
-namespace Game.Entities
+namespace Game.Entities.Object
 {
     public enum TypeId
     {

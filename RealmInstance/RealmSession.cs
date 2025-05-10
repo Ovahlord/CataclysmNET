@@ -8,8 +8,7 @@ using Game.Enums;
 using Game.Packets;
 using Game.Packets.Substructures;
 using Microsoft.EntityFrameworkCore;
-using Core.Packets;
-using Game.Entities;
+using Game.Entities.Object;
 
 namespace RealmInstance
 {
@@ -29,7 +28,7 @@ namespace RealmInstance
 
         protected override void OnSessionAuthenticated(bool requestedByServer)
         {
-            // When we connected for the first time, immediately redirect to the 2nd socket which uses secure keys
+            // When we connect for the first time, immediately redirect to the 2nd socket which uses secure keys
             if (!requestedByServer)
                 SendConnectTo(Realm.Instance.GetConnectToEndPoint(), ConnectToConnectionType.Realm);
 

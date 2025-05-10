@@ -1,5 +1,5 @@
 ﻿using Core.Packets;
-using Game.Entities;
+using Game.Entities.Object;
 
 namespace Game.Packets
 {

@@ -1,4 +1,4 @@
-﻿using Game.Entities;
+﻿using Game.Entities.Object;
 
 namespace Game.Packets.Substructures
 {
