@@ -1,0 +1,11 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="CataclysmNET.Core/CataclysmNET.Core.csproj" />
+  <Project Path="CataclysmNET.InstanceHost\CataclysmNET.InstanceHost.csproj" />
+  <Project Path="CataclysmNET/CataclysmNET.csproj" />
+</Solution>
+
