@@ -7,5 +7,7 @@
   <Project Path="CataclysmNET.Core/CataclysmNET.Core.csproj" />
   <Project Path="CataclysmNET.InstanceHost\CataclysmNET.InstanceHost.csproj" />
   <Project Path="CataclysmNET/CataclysmNET.csproj" />
+  <Project Path="submodules/DBCD/DBCD.IO/DBCD.IO.csproj" />
+  <Project Path="submodules/DBCD/DBCD/DBCD.csproj" />
 </Solution>
 
