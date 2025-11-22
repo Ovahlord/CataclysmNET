@@ -4,4 +4,7 @@
         <OutputType>Exe</OutputType>
     </PropertyGroup>
 
+    <ItemGroup>
+        <PackageReference Include="System.CommandLine"/>
+    </ItemGroup>
 </Project>
