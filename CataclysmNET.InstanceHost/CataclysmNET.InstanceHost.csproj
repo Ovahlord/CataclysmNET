@@ -3,8 +3,8 @@
     <PropertyGroup>
         <OutputType>Exe</OutputType>
     </PropertyGroup>
-
+    
     <ItemGroup>
-        <PackageReference Include="System.CommandLine"/>
+      <ProjectReference Include="..\CataclysmNET.Core\CataclysmNET.Core.csproj" />
     </ItemGroup>
 </Project>
