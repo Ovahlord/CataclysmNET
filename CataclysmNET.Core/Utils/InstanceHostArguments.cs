@@ -1,4 +1,5 @@
 using System.CommandLine;
+using System.Diagnostics.CodeAnalysis;
 
 namespace CataclysmNET.Core.Utils;
 
@@ -9,26 +10,26 @@ public class InstanceHostArguments
         Required = true
     };
 
-    private static readonly Option<int> Param1Option = new("--param1")
+    private static readonly Option<int> Parameter1Option = new("--param1")
     {
         Required = true
     };
 
-    private static readonly Option<int> Param2Option = new("--param2")
+    private static readonly Option<int> Parameter2Option = new("--param2")
     {
         Required = true
     };
 
     private static readonly RootCommand CommandParser = new()
     {
-        Options = { InstanceTypeOption, Param1Option, Param2Option }
+        Options = { InstanceTypeOption, Parameter1Option, Parameter2Option }
     };
 
     public string InstanceType { get; private set; } = string.Empty;
     public int Parameter1 { get; private set; }
     public int Parameter2 { get; private set; }
 
-    public static bool TryParse(string[] args, out InstanceHostArguments? arguments)
+    public static bool TryParse(string[] args, [NotNullWhen(true)] out InstanceHostArguments? arguments)
     {
         arguments = null;
 
@@ -39,8 +40,8 @@ public class InstanceHostArguments
         arguments = new InstanceHostArguments()
         {
             InstanceType = parseResult.GetRequiredValue(InstanceTypeOption),
-            Parameter1 = parseResult.GetRequiredValue(Param1Option),
-            Parameter2 = parseResult.GetRequiredValue(Param2Option)
+            Parameter1 = parseResult.GetRequiredValue(Parameter1Option),
+            Parameter2 = parseResult.GetRequiredValue(Parameter2Option)
         };
 
         return true;

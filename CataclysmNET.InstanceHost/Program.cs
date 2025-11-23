@@ -3,7 +3,7 @@ using CataclysmNET.Core.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-if (!InstanceHostArguments.TryParse(args, out InstanceHostArguments? arguments) || arguments == null)
+if (!InstanceHostArguments.TryParse(args, out InstanceHostArguments? arguments))
 {
     Console.WriteLine("Failed to parse command line arguments for InstanceHost process. Process is shutting down");
     return;
