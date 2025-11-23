@@ -1,8 +1,9 @@
+using CataclysmNET.Core.Database.Tables.World;
 using Microsoft.EntityFrameworkCore;
 
-namespace CataclysmNET.Core.Database.Model
+namespace CataclysmNET.Core.Database.Models
 {
-    public class RealmDatabaseContext : DbContext
+    public class WorldDatabaseContext : DbContext
     {
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -10,6 +11,8 @@ namespace CataclysmNET.Core.Database.Model
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<WorldInstance>()
+                .HasKey(i => new { i.RealmInstanceId, i.MapId });
         }
     }
 }
