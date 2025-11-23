@@ -6,6 +6,7 @@ namespace CataclysmNET.Core.Database.Models
     public class LoginDatabaseContext : DbContext
     {
         public DbSet<LoginInstance> LoginInstances { get; set; }
+        public DbSet<GameAccount> GameAccounts { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
