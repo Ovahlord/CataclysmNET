@@ -1,17 +1,24 @@
+using CataclysmNET.Core.Database.Models;
+using CataclysmNET.Core.Database.Tables.Login;
 using Microsoft.Extensions.Hosting;
 
-namespace CataclysmNET.Core.Services
-{
-    public class LoginService : IHostedService
-    {
-        public Task StartAsync(CancellationToken cancellationToken)
-        {
-            return Task.CompletedTask;
-        }
+namespace CataclysmNET.Core.Services;
 
-        public Task StopAsync(CancellationToken cancellationToken)
+public class LoginService : IHostedService
+{
+    public async Task StartAsync(CancellationToken cancellationToken)
+    {
+        await using LoginDatabaseContext loginDb = new();
+        if (await loginDb.Database.EnsureCreatedAsync(cancellationToken))
         {
-            return Task.CompletedTask;
+            loginDb.LoginInstances.Add(new LoginInstance());
+            await loginDb.SaveChangesAsync(cancellationToken);
+            Console.WriteLine("Login database has been created and set up.");
         }
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
     }
 }
