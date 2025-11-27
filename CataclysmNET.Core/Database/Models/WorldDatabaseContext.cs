@@ -11,7 +11,8 @@ namespace CataclysmNET.Core.Database.Models
         
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseMySql(ServerVersion.AutoDetect(AppSettings.Configuration.GetConnectionString("WorldDbConnectionString")));
+            string? connectionString = AppSettings.Configuration.GetConnectionString("WorldDbConnectionString");
+            optionsBuilder.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
